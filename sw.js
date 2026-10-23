@@ -28,6 +28,8 @@ const PRECACHE = [
   "manifest.webmanifest",
   "moon_1024.jpg",
   "style.css",
+  "util.js",
+  "orbits.js",
   "vendor/three/LICENSE",
   "vendor/three/build/three.module.min.js",
   "vendor/three/examples/jsm/controls/OrbitControls.js",

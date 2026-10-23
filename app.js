@@ -5,27 +5,8 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { TEXTURES, ALL_TEXTURES, COMETS, POI_DATA, INFO_DATA, MOON_DATA, PLANETS, MEDIA_DATA, EVENTS, EVENT_TYPES, getEventsSorted, ORBITAL_ELEMENTS, SPIN_HOURS } from './data.js';
-
-// ===== LOG SYSTEM =====
-const logs = [];
-function addLog(msg, type='info') {
-  const t = new Date().toLocaleTimeString('de-DE');
-  logs.push({ time: t, message: msg, type });
-  const la = document.getElementById('log-area');
-  if (la) {
-    const l = document.createElement('div');
-    l.className = 'log-line ' + type;
-    l.innerHTML = `<span class="time">[${t}]</span> ${msg}`;
-    la.appendChild(l);
-    la.scrollTop = la.scrollHeight;
-    document.getElementById('log-count').textContent = logs.length + ' Zeilen';
-  }
-}
-function clearLog(){logs.length=0;const la=document.getElementById('log-area');if(la)la.innerHTML='';document.getElementById('log-count').textContent='0 Zeilen';}
-function exportLogTxt(){const h=`Sonnensystem - Systemcheck\n${new Date().toLocaleString('de-DE')}\n${location.href}\n\n`;const c=logs.map(l=>`[${l.time}] [${l.type.toUpperCase()}] ${l.message}`).join('\n');dlFile(h+c,`systemcheck-${ts()}.txt`,'text/plain');}
-function exportLogJson(){const d={timestamp:new Date().toISOString(),url:location.href,userAgent:navigator.userAgent,log:logs};dlFile(JSON.stringify(d,null,2),`systemcheck-${ts()}.json`,'application/json');}
-function dlFile(c,f,m){const b=new Blob([c],{type:m});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=f;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(u),2000);}
-function ts(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}_${String(d.getHours()).padStart(2,'0')}-${String(d.getMinutes()).padStart(2,'0')}`;}
+import { logs, addLog, clearLog, exportLogTxt, exportLogJson, dlFile, ts, escapeHtml } from './util.js';
+import { SCENE_AU, J2000, julianDaysSinceJ2000, deg2rad, rad2deg, solveKepler, keplerPosition, orbitPointFromE } from './orbits.js';
 
 // ===== GLOBAL CONSTANTS (must be defined before first use) =====
 const NOTES_KEY = 'ss3d_notes';
@@ -745,45 +726,6 @@ sunLabel.element.className='planet-label';
 sunLabel.element.textContent='Sonne';
 sunLabel.position.set(0,2.2,0);
 sunGroup.add(sunLabel);
-
-// ===== ORBIT-POSITIONEN =====
-const SCENE_AU = 7.0;
-const J2000 = Date.UTC(2000,0,1,12,0,0);
-
-function julianDaysSinceJ2000(date){ return (date.getTime() - J2000) / 86400000; }
-function deg2rad(d){ return d * Math.PI / 180; }
-function rad2deg(r){ return r * 180 / Math.PI; }
-function solveKepler(M, e){
-  // Für sehr exzentrische Bahnen (Kometen) von ±π starten, sonst divergiert Newton
-  let E = e<0.8 ? M : (M>=0 ? Math.PI : -Math.PI);
-  for(let i=0;i<40;i++){
-    const d = E - e*Math.sin(E) - M;
-    E -= d / (1 - e*Math.cos(E));
-    if(Math.abs(d)<1e-8)break;
-  }
-  return E;
-}
-function keplerPosition(el, date){
-  const d = julianDaysSinceJ2000(date);
-  const n = 360 / el.period;
-  const L = (el.L + n * d) % 360;
-  const M = deg2rad(((L - el.ϖ + 540) % 360) - 180);
-  return orbitPointFromE(el, solveKepler(M, el.e));
-}
-// Punkt auf der (geneigten, exzentrischen) Bahn für eine exzentrische Anomalie E
-function orbitPointFromE(el, E){
-  const cosE = Math.cos(E), sinE = Math.sin(E);
-  const xv = el.a * (cosE - el.e);
-  const yv = el.a * Math.sqrt(1 - el.e*el.e) * sinE;
-  const v = Math.atan2(yv, xv);
-  const r = Math.sqrt(xv*xv + yv*yv);
-  const ϖ = deg2rad(el.ϖ), Ω = deg2rad(el.Ω), i = deg2rad(el.i);
-  const θ = v + ϖ - Ω;
-  const xh = r * (Math.cos(Ω)*Math.cos(θ) - Math.sin(Ω)*Math.sin(θ)*Math.cos(i));
-  const yh = r * (Math.sin(Ω)*Math.cos(θ) + Math.cos(Ω)*Math.sin(θ)*Math.cos(i));
-  const zh = r * (Math.sin(θ)*Math.sin(i));
-  return new THREE.Vector3(xh * SCENE_AU, zh * SCENE_AU, yh * SCENE_AU);
-}
 
 function updatePlanetPositions(date){
   PLANETS.forEach(pd=>{
@@ -1746,7 +1688,6 @@ function renderNotes(){
     list.appendChild(card);
   });
 }
-function escapeHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function flyToNote(n){
   if(focusMode)exitFocusMode();
   camFlight={
