@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Sonnensystem 3D</title>
+<script>
+(function(){
+  var path = location.pathname;
+  if (/\.[a-zA-Z0-9]+$/.test(path)) {
+    path = path.replace(/\/[^/]*$/, '/');
+  } else if (path.slice(-1) !== '/') {
+    path = path + '/';
+  }
+  var base = document.createElement('base');
+  base.href = path;
+  document.head.insertBefore(base, document.head.firstChild);
+  if (location.pathname.slice(-1) !== '/' && !/\.[a-zA-Z0-9]+$/.test(location.pathname)) {
+    try { history.replaceState(null, '', path + location.search + location.hash); } catch(e) {}
+  }
+  window.__APP_BASE__ = path;
+})();
+</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1l2.1-2.1M17 7l2.1-2.1"/></symbol>
+<symbol id="i-orbit" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="10" ry="5"/></symbol>
+<symbol id="i-tag" viewBox="0 0 24 24"><path d="M3 12l9-9h9v9l-9 9z"/><circle cx="16" cy="8" r="1.5" fill="currentColor"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol>
+<symbol id="i-satellite" viewBox="0 0 24 24"><path d="M4 20l4-4M6 12l6 6M14 4l6 6-4 4-6-6z"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/></symbol>
+<symbol id="i-asteroid" viewBox="0 0 24 24"><path d="M5 15l-1-4 3-4 5-2 5 3 2 5-2 5-5 2-5-2z"/></symbol>
+<symbol id="i-kuiper" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-dasharray="2 2"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-comet" viewBox="0 0 24 24"><circle cx="7" cy="7" r="3"/><path d="M7 7l11 11M7 7l13 8M7 7l8 13" stroke-width="1"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-5-5"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><rect x="7" y="5" width="3" height="14"/><rect x="14" y="5" width="3" height="14"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4l12 8-12 8z" fill="currentColor"/></symbol>
+<symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></symbol>
+<symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 1 0 3 3l-3 3-3-3 3-3z"/><path d="M14.7 9.3l-9 9a2 2 0 0 0 3 3l9-9"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></symbol>
+<symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5" stroke-linecap="round"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></symbol>
+<symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4"/></symbol>
+<symbol id="i-json" viewBox="0 0 24 24"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+<symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6-7-11a7 7 0 1 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+<symbol id="i-note" viewBox="0 0 24 24"><path d="M14 3H6v18h12V9z"/><path d="M14 3v6h6"/><path d="M8 13h8M8 17h5"/></symbol>
+<symbol id="i-planet" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/><ellipse cx="12" cy="12" rx="10" ry="3.5"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-light" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 2a7 7 0 0 1 4 12.5V17H8v-2.5A7 7 0 0 1 12 2z"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></symbol>
+<symbol id="i-icons" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+<symbol id="i-chevron" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+<symbol id="i-minimize" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-2h6l2 2h3v12H4z"/><circle cx="12" cy="13" r="4"/></symbol>
+<symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8 7.5C12 8 12 16 16 16.5"/></symbol>
+<symbol id="i-layout" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="18" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></symbol>
+<symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M17.9 17.9A10 10 0 0 1 12 19c-7 0-11-7-11-7a18 18 0 0 1 5.1-5.1M9.9 4.2A10 10 0 0 1 12 4c7 0 11 7 11 7a18 18 0 0 1-3.2 3.8M1 1l22 22"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-graduation" viewBox="0 0 24 24"><path d="M2 9l10-4 10 4-10 4z"/><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/><path d="M22 9v5"/></symbol>
+<symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z" fill="currentColor"/></symbol>
+<symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M3 17l5-5 4 4 3-3 6 6"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></symbol>
+</svg>
+
+<div id="loading"><div class="spinner"></div><div>Sonnensystem wird geladen...</div></div>
+
+<button id="ui-reveal" title="UI einblenden" style="display:none"><svg class="ico"><use href="#i-eye"/></svg></button>
+
+<div id="float-host"></div>
+<div id="float-dock"></div>
+
+<aside id="sidebar" class="collapsed">
+  <div class="sb-rail">
+    <!-- Gruppe 1: Erkunden -->
+    <button class="sb-tab active" data-panel="nav" title="Navigation"><svg class="ico"><use href="#i-planet"/></svg><span class="sb-tab-label">Nav</span></button>
+    <button class="sb-tab demo-tab" data-panel="demo" title="Demo-Tour starten"><svg class="ico"><use href="#i-play"/></svg><span class="sb-tab-label">Demo</span></button>
+
+    <div class="sb-rail-divider"></div>
+
+    <!-- Gruppe 2: Darstellung & Steuerung -->
+    <button class="sb-tab" data-panel="view" title="Anzeige"><svg class="ico"><use href="#i-eye"/></svg><span class="sb-tab-label">Ansicht</span></button>
+    <button class="sb-tab" data-panel="sim" title="Simulation"><svg class="ico"><use href="#i-orbit"/></svg><span class="sb-tab-label">Sim</span></button>
+    <button class="sb-tab" data-panel="light" title="Beleuchtung"><svg class="ico"><use href="#i-light"/></svg><span class="sb-tab-label">Licht</span></button>
+    <button class="sb-tab" data-panel="events" title="Ereignisse"><svg class="ico"><use href="#i-orbit"/></svg><span class="sb-tab-label">Events</span></button>
+
+    <div class="sb-rail-divider"></div>
+
+    <!-- Gruppe 3: Werkzeuge -->
+    <button class="sb-tab" data-panel="route" title="Route"><svg class="ico"><use href="#i-route"/></svg><span class="sb-tab-label">Route</span></button>
+    <button class="sb-tab" data-panel="notes" title="Notizen"><svg class="ico"><use href="#i-note"/></svg><span class="sb-tab-label">Notizen</span></button>
+    <button class="sb-tab" data-panel="tools" title="Wartung"><svg class="ico"><use href="#i-wrench"/></svg><span class="sb-tab-label">Tools</span></button>
+
+    <div class="sb-rail-spacer"></div>
+    <div class="sb-rail-divider"></div>
+
+    <!-- Gruppe 4: UI-Steuerung -->
+    <button class="sb-tab" id="btn-ui-mode" title="Menü-Modus: Sidebar / Fenster"><svg class="ico"><use href="#i-layout"/></svg><span class="sb-tab-label">Modus</span></button>
+    <button class="sb-tab" id="btn-theme" title="Hell / Dunkel"><svg class="ico"><use href="#i-sun"/></svg><span class="sb-tab-label">Theme</span></button>
+    <button class="sb-tab" id="btn-photo" title="Foto ohne UI"><svg class="ico"><use href="#i-camera"/></svg><span class="sb-tab-label">Foto</span></button>
+    <button class="sb-tab" id="btn-toggle-labels" title="Texte an/aus"><svg class="ico"><use href="#i-icons"/></svg><span class="sb-tab-label">Icons</span></button>
+    <button class="sb-tab" id="btn-hide-ui" title="Komplettes UI ausblenden (Taste H)"><svg class="ico"><use href="#i-eye-off"/></svg><span class="sb-tab-label">Aus</span></button>
+  </div>
+  <div class="sb-panel" id="sb-panels">
+    <button type="button" class="sb-panel-close" id="btn-close-panel" title="Menü schließen" aria-label="Menü schließen">
+      <svg class="ico"><use href="#i-close"/></svg>
+    </button>
+
+    <!-- NAV -->
+    <div class="sb-section active" data-panel="nav">
+      <div class="sb-section-title">Navigation</div>
+      <button class="action-btn full demo-quick" id="btn-demo-quick">
+        <svg class="ico"><use href="#i-play"/></svg>
+        <span class="btn-text">🎬 Demo-Tour starten</span>
+      </button>
+      <div class="action-row">
+        <button class="action-btn" id="btn-pause"><svg class="ico"><use href="#i-pause"/></svg> <span class="btn-text">Pause</span></button>
+        <button class="action-btn" id="btn-reset"><svg class="ico"><use href="#i-reset"/></svg> <span class="btn-text">Reset</span></button>
+      </div>
+      <div class="search-row">
+        <input type="text" id="search-input" list="search-list" placeholder="Objekt suchen..." autocomplete="off">
+        <button id="btn-search" title="Suchen" aria-label="Suchen"><svg class="ico"><use href="#i-search"/></svg></button>
+      </div>
+      <datalist id="search-list"></datalist>
+      <div id="search-result"></div>
+      <div class="section-label">Schnellnavigation</div>
+      <div class="planet-list" id="planet-list"></div>
+    </div>
+
+    <!-- DEMO -->
+    <div class="sb-section" data-panel="demo">
+      <div class="sb-section-title">Demo-Tour</div>
+      <p class="light-hint">Selbstablaufende Führung durch Sonne, Planeten, Zeitsteuerung und Ereignisse – mit Erklärungen.</p>
+      <button class="action-btn full" id="btn-start-demo"><svg class="ico"><use href="#i-play"/></svg> <span class="btn-text">Demo starten</span></button>
+      <div class="section-label" style="margin-top:14px">Schnellhilfe</div>
+      <div class="light-hint">
+        <b>Doppeltipp</b> auf Planet → Infos<br>
+        <b>Schule:</b> im Info-Fenster Tab „🎓 Schule"<br>
+        <b>Videos:</b> rechtes Panel Tab „▶️ Videos"<br>
+        <b>Aus</b> (Auge) = UI komplett aus · Taste <b>H</b><br>
+        <b>Foto</b> · Taste <b>P</b>
+      </div>
+    </div>
+
+    <!-- VIEW -->
+    <div class="sb-section" data-panel="view">
+      <div class="sb-section-title">Anzeige</div>
+      <div class="toggle-row active" data-target="orbits"><div class="toggle-label"><svg class="ico"><use href="#i-orbit"/></svg><span class="tl">Umlaufbahnen</span></div><div class="switch"></div></div>
+      <div class="toggle-row active" data-target="labels"><div class="toggle-label"><svg class="ico"><use href="#i-tag"/></svg><span class="tl">Namen</span></div><div class="switch"></div></div>
+      <div class="toggle-row active" data-target="moons"><div class="toggle-label"><svg class="ico"><use href="#i-moon"/></svg><span class="tl">Monde</span></div><div class="switch"></div></div>
+      <div class="toggle-row" data-target="moonOrbits"><div class="toggle-label"><svg class="ico"><use href="#i-orbit"/></svg><span class="tl">Mondbahnen</span></div><div class="switch"></div></div>
+      <div class="toggle-row active" data-target="satellites"><div class="toggle-label"><svg class="ico"><use href="#i-satellite"/></svg><span class="tl">Satelliten</span></div><div class="switch"></div></div>
+      <div class="toggle-row active" data-target="asteroids"><div class="toggle-label"><svg class="ico"><use href="#i-asteroid"/></svg><span class="tl">Asteroidengürtel</span></div><div class="switch"></div></div>
+      <div class="toggle-row active" data-target="kuiper"><div class="toggle-label"><svg class="ico"><use href="#i-kuiper"/></svg><span class="tl">Kuipergürtel</span></div><div class="switch"></div></div>
+      <div class="toggle-row active" data-target="comets"><div class="toggle-label"><svg class="ico"><use href="#i-comet"/></svg><span class="tl">Kometen</span></div><div class="switch"></div></div>
+      <div class="toggle-row active" data-target="milkyway"><div class="toggle-label"><svg class="ico"><use href="#i-sun"/></svg><span class="tl">Milchstraße</span></div><div class="switch"></div></div>
+    </div>
+
+    <!-- SIM -->
+    <div class="sb-section" data-panel="sim">
+      <div class="sb-section-title">Simulation</div>
+      <p class="light-hint">Start: <b>jetzt</b>, Pause (Echtzeit-Stand). Steuerung unten in der Mitte.</p>
+      <div class="slider-row"><label><span>Geschwindigkeit</span><span id="speed-val">1× Echtzeit</span></label><input type="range" id="speed-slider" min="0" max="5" step="1" value="0"></div>
+      <div class="light-hint">0 = Echtzeit · 1 = Min/s · 2 = Std/s · 3 = Tag/s · 4 = Monat/s · 5 = Jahr/s</div>
+    </div>
+
+    <!-- LIGHT -->
+    <div class="sb-section" data-panel="light">
+      <div class="sb-section-title">Licht-Studio</div>
+      <p class="light-hint">Schiebe Regler live – Export kopiert alle Werte zum Teilen.</p>
+      <div class="section-label">Sonne</div>
+      <div class="slider-row"><label><span>Helligkeit Sonne</span><span id="sun-intensity-val">5.2</span></label><input type="range" id="sun-intensity" min="0" max="15" step="0.1" value="5.2"></div>
+      <div class="slider-row"><label><span>Farbe (warm → kalt)</span><span id="sun-temp-val">Warm</span></label><input type="range" id="sun-temp" min="0" max="100" step="1" value="38"></div>
+      <div class="slider-row"><label><span>Aura / Corona</span><span id="corona-val">1.35</span></label><input type="range" id="corona" min="0" max="2.5" step="0.05" value="1.35"></div>
+      <div class="slider-row"><label><span>Aura-Größe</span><span id="corona-size-val">1.15</span></label><input type="range" id="corona-size" min="0.4" max="2.5" step="0.05" value="1.15"></div>
+      <div class="section-label">Kamera &amp; Atmosphäre</div>
+      <div class="slider-row"><label><span>Gesamt-Belichtung</span><span id="exposure-val">0.95</span></label><input type="range" id="exposure" min="0.3" max="2.5" step="0.05" value="0.95"></div>
+      <div class="slider-row"><label><span>Umgebungslicht</span><span id="ambient-val">0.10</span></label><input type="range" id="ambient" min="0" max="0.8" step="0.01" value="0.1"></div>
+      <div class="slider-row"><label><span>Himmel / Boden-Licht</span><span id="hemi-val">0.12</span></label><input type="range" id="hemi" min="0" max="0.6" step="0.01" value="0.12"></div>
+      <div class="slider-row"><label><span>Leucht-Effekt (Bloom)</span><span id="bloom-val">0.22</span></label><input type="range" id="bloom" min="0" max="1.2" step="0.02" value="0.22"></div>
+      <div class="slider-row"><label><span>Milchstraße</span><span id="mw-val">0.85</span></label><input type="range" id="mw-bright" min="0" max="2" step="0.05" value="0.85"></div>
+      <div class="slider-row"><label><span>Sterne</span><span id="stars-val">1.15</span></label><input type="range" id="stars-bright" min="0" max="2" step="0.05" value="1.15"></div>
+      <div class="section-label">Kometen &amp; Körper</div>
+      <div class="slider-row"><label><span>Kometen-Schweif</span><span id="comet-tail-val">1.15</span></label><input type="range" id="comet-tail" min="0" max="2.5" step="0.05" value="1.15"></div>
+      <div class="slider-row"><label><span>Kometen-Koma (Kopf)</span><span id="comet-coma-val">1.10</span></label><input type="range" id="comet-coma" min="0" max="2.5" step="0.05" value="1.1"></div>
+      <div class="slider-row"><label><span>Kometen-Kern-Leuchten</span><span id="comet-core-val">1.20</span></label><input type="range" id="comet-core" min="0" max="2.5" step="0.05" value="1.2"></div>
+      <div class="slider-row"><label><span>Satelliten-Leuchten</span><span id="sat-glow-val">1.30</span></label><input type="range" id="sat-glow" min="0" max="3" step="0.05" value="1.3"></div>
+      <div class="section-label">Schnellwahl</div>
+      <div class="preset-row">
+        <button class="preset-btn" data-preset="day">Tag</button>
+        <button class="preset-btn" data-preset="dawn">Dämmerung</button>
+        <button class="preset-btn" data-preset="night">Nacht</button>
+        <button class="preset-btn" data-preset="cinema">Kino</button>
+      </div>
+      <div class="section-label">Export</div>
+      <button class="action-btn full" id="btn-export-light"><svg class="ico"><use href="#i-file"/></svg> <span class="btn-text">Einstellungen kopieren</span></button>
+      <div id="light-export-status" class="export-status"></div>
+      <textarea id="light-export-box" class="export-box" readonly rows="6" placeholder="Export erscheint hier…"></textarea>
+    </div>
+
+    <!-- NOTES -->
+    <div class="sb-section" data-panel="notes">
+      <div class="sb-section-title">Notizen</div>
+      <button class="action-btn full" id="btn-add-note"><svg class="ico"><use href="#i-plus"/></svg> <span class="btn-text">Notiz hier erstellen</span></button>
+      <div class="notes-list" id="notes-list"></div>
+      <div class="notes-empty" id="notes-empty">Noch keine Notizen. Bewege die Kamera und tippe auf „Notiz hier erstellen".</div>
+    </div>
+
+    <!-- EVENTS -->
+    <div class="sb-section" data-panel="events">
+      <div class="sb-section-title">Astronomische Ereignisse</div>
+      <p class="light-hint">Zeitpunkt setzen, optional Demo-Ausrichtung. Bahnen sind vereinfacht – Kalender &amp; Kontext sind real.</p>
+      <div class="event-filters">
+        <button type="button" class="ev-filter active" data-filter="all">Alle</button>
+        <button type="button" class="ev-filter" data-filter="eclipse_solar">☀ Finsternis</button>
+        <button type="button" class="ev-filter" data-filter="eclipse_lunar">🌕 Mondfi.</button>
+        <button type="button" class="ev-filter" data-filter="meteor">☄ Meteore</button>
+        <button type="button" class="ev-filter" data-filter="mission">🚀 Mission</button>
+        <button type="button" class="ev-filter" data-filter="other">Weitere</button>
+      </div>
+      <div id="events-list" class="events-list"></div>
+      <div id="event-detail" class="event-detail hidden"></div>
+    </div>
+
+    <!-- ROUTE -->
+    <div class="sb-section" data-panel="route">
+      <div class="sb-section-title">Route planen</div>
+      <div class="section-label">Start</div>
+      <select id="route-from" class="route-select"></select>
+      <div class="section-label">Ziel</div>
+      <select id="route-to" class="route-select"></select>
+      <div class="section-label">Geschwindigkeit</div>
+      <div class="speed-grid" id="route-speeds">
+        <button type="button" class="speed-chip active" data-speed="walk" data-kmh="5">🚶 Zu Fuß<br><small>5 km/h</small></button>
+        <button type="button" class="speed-chip" data-speed="car" data-kmh="100">🚗 Auto<br><small>100 km/h</small></button>
+        <button type="button" class="speed-chip" data-speed="jet" data-kmh="900">✈️ Jet<br><small>900 km/h</small></button>
+        <button type="button" class="speed-chip" data-speed="apollo" data-kmh="39000">🚀 Apollo 11<br><small>~39.000 km/h</small></button>
+        <button type="button" class="speed-chip" data-speed="voyager" data-kmh="62000">🛰️ Voyager<br><small>~62.000 km/h</small></button>
+        <button type="button" class="speed-chip" data-speed="light" data-kmh="1079252848.8">✨ Licht<br><small>c</small></button>
+      </div>
+      <button class="action-btn full" id="btn-calc-route" style="margin-top:12px"><svg class="ico"><use href="#i-route"/></svg> <span class="btn-text">Route berechnen</span></button>
+      <button class="action-btn full" id="btn-clear-route" style="margin-top:6px"><span class="btn-text">Route löschen</span></button>
+      <div id="route-result" class="route-result"></div>
+    </div>
+
+    <!-- TOOLS -->
+    <div class="sb-section" data-panel="tools">
+      <div class="sb-section-title">Wartung</div>
+      <button class="syscheck-btn" id="btn-syscheck"><div class="left"><div class="status-dot"></div><svg class="ico"><use href="#i-wrench"/></svg><span class="btn-text">Systemcheck</span></div><span class="badge" id="syscheck-badge">—</span></button>
+      <div class="section-label" style="margin-top:14px">Einstellungen</div>
+      <button class="action-btn full" id="btn-export-all"><svg class="ico"><use href="#i-json"/></svg> <span class="btn-text">Alles exportieren</span></button>
+      <button class="action-btn full" id="btn-import-all" style="margin-top:6px"><svg class="ico"><use href="#i-file"/></svg> <span class="btn-text">Einstellungen laden</span></button>
+      <input type="file" id="import-file" accept="application/json,.json" style="display:none">
+      <div class="light-hint" style="margin-top:8px">Licht, UI-Modus, Theme und Notizen als JSON</div>
+      <div class="section-label" style="margin-top:14px">Tastatur</div>
+      <div class="light-hint"><b>H</b> UI aus/ein · <b>P</b> Foto · <b>Esc</b> Fokus beenden</div>
+    </div>
+  </div>
+</aside>
+
+<!-- FOCUS PANEL -->
+<div id="focus-panel">
+  <!-- Zentraler Übersicht-Button (immer sichtbar im Focus) -->
+  <button class="focus-exit-pill" id="btn-focus-exit" title="Zurück zur Übersicht (Esc)">
+    <svg class="ico"><use href="#i-home"/></svg>
+    <span>Übersicht</span>
+  </button>
+
+  <div id="focus-left" class="focus-box">
+    <div class="focus-header">
+      <button id="btn-back" title="Zurück"><svg class="ico"><use href="#i-arrow-left"/></svg></button>
+      <div class="focus-glyph" id="focus-glyph">⊕</div>
+      <div class="focus-title-block"><h2 id="focus-name">Objekt</h2><div class="focus-subtitle" id="focus-subtitle">Typ</div></div>
+      <button class="focus-min-btn" id="btn-min-left" title="Einklappen"><svg class="ico"><use href="#i-minimize"/></svg></button>
+    </div>
+    <div class="focus-body">
+      <div class="focus-left-tabs">
+        <button type="button" class="fl-tab active" data-ftab="info">ℹ️ Info</button>
+        <button type="button" class="fl-tab" data-ftab="school" id="tab-school">🎓 Schule</button>
+      </div>
+      <div class="fl-panel active" data-fpanel="info">
+        <div class="focus-desc" id="focus-desc"></div>
+        <div class="focus-stats-title">Physikalische Daten</div>
+        <div class="focus-grid" id="focus-grid"></div>
+        <div class="focus-fact" id="focus-fact"></div>
+      </div>
+      <div class="fl-panel" data-fpanel="school">
+        <div id="focus-edu" class="focus-edu hidden">
+          <div class="edu-subjects" id="edu-subjects"></div>
+          <div class="edu-tabs">
+            <button type="button" class="edu-tab active" data-level="haupt">Haupt</button>
+            <button type="button" class="edu-tab" data-level="real">Real</button>
+            <button type="button" class="edu-tab" data-level="gym">Gymnasium</button>
+          </div>
+          <div class="edu-body" id="edu-body"></div>
+          <div class="edu-tip" id="edu-tip"></div>
+        </div>
+        <div id="edu-empty" class="media-empty">Keine Schultexte für dieses Objekt</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="focus-right" class="focus-box">
+    <div class="poi-header">
+      <h3><svg class="ico"><use href="#i-pin"/></svg><span class="poi-h-text" id="focus-right-title">Medien & Orte</span></h3>
+      <button class="focus-min-btn" id="btn-min-right" title="Einklappen"><svg class="ico"><use href="#i-minimize"/></svg></button>
+    </div>
+    <div class="focus-right-tabs">
+      <button type="button" class="fr-tab active" data-tab="poi">📍 Orte</button>
+      <button type="button" class="fr-tab" data-tab="gallery">🖼️ Galerie</button>
+      <button type="button" class="fr-tab" data-tab="videos">▶️ Videos</button>
+    </div>
+    <div class="fr-panel active" data-panel="poi">
+      <div class="poi-search-row">
+        <input type="text" class="poi-search" id="poi-search-input" placeholder="Ort suchen..." autocomplete="off">
+        <button class="poi-search-btn" id="poi-search-btn" title="Suchen"><svg class="ico"><use href="#i-search"/></svg></button>
+      </div>
+      <div class="poi-list" id="poi-list"></div>
+    </div>
+    <div class="fr-panel" data-panel="gallery">
+      <div class="media-gallery" id="media-gallery"></div>
+    </div>
+    <div class="fr-panel" data-panel="videos">
+      <div class="media-videos" id="media-videos"></div>
+    </div>
+  </div>
+
+  <div id="media-lightbox" class="hidden">
+    <button type="button" id="lb-close" title="Schließen">×</button>
+    <img id="lb-img" alt="">
+    <div id="lb-cap"></div>
+  </div>
+
+  <button class="focus-restore" id="focus-restore-left" title="Info & Schultexte anzeigen" style="display:none">
+    <svg class="ico"><use href="#i-file"/></svg>
+    <span class="fr-restore-label">Info & Schule</span>
+  </button>
+  <button class="focus-restore" id="focus-restore-right" title="Orte, Galerie & Videos" style="display:none">
+    <svg class="ico"><use href="#i-pin"/></svg>
+    <span class="fr-restore-label">Orte & Medien</span>
+  </button>
+</div>
+
+<div id="info-panel">
+  <button id="close-info" title="Schließen"><svg class="ico"><use href="#i-close"/></svg></button>
+  <div class="info-glyph" id="info-glyph">⊕</div>
+  <h2 id="info-name">Objekt</h2>
+  <div class="info-subtitle" id="info-subtitle">Typ</div>
+  <div class="info-desc" id="info-desc"></div>
+  <div class="info-hint">Doppeltipp für Fokus-Ansicht</div>
+</div>
+
+<div id="note-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="note-modal-title">Neue Notiz</h3>
+      <button id="close-note-modal" title="Schließen"><svg class="ico"><use href="#i-close"/></svg></button>
+    </div>
+    <input type="text" id="note-title-input" placeholder="Titel..." maxlength="80">
+    <textarea id="note-text-input" placeholder="Notiztext..." rows="5"></textarea>
+    <div class="modal-footer">
+      <button class="action-btn" id="btn-save-note"><svg class="ico"><use href="#i-check"/></svg> Speichern</button>
+      <button class="action-btn" id="btn-cancel-note">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<div id="fps-display">FPS: --</div>
+
+<div id="sim-clock-wrap">
+  <div id="sim-clock" title="Tippen zum Einstellen">
+    <div id="clock-date">—</div>
+    <div id="clock-time">—</div>
+  </div>
+  <div id="clock-transport">
+    <button type="button" id="btn-speed-down" title="Langsamer">«</button>
+    <button type="button" id="btn-clock-play" title="Play / Pause">▶</button>
+    <button type="button" id="btn-speed-up" title="Schneller">»</button>
+  </div>
+  <div id="clock-speed-label">Echtzeit · Pause</div>
+</div>
+<div id="clock-picker" class="hidden">
+  <div class="cp-hd"><span>Simulationszeit</span><button type="button" id="cp-close" title="Schließen"><svg class="ico"><use href="#i-close"/></svg></button></div>
+  <div class="cp-wheels">
+    <div class="cp-col"><label>Jahr</label><input type="number" id="cp-year" min="1900" max="2200"></div>
+    <div class="cp-col"><label>Monat</label><input type="number" id="cp-month" min="1" max="12"></div>
+    <div class="cp-col"><label>Tag</label><input type="number" id="cp-day" min="1" max="31"></div>
+    <div class="cp-col"><label>Std</label><input type="number" id="cp-hour" min="0" max="23"></div>
+    <div class="cp-col"><label>Min</label><input type="number" id="cp-min" min="0" max="59"></div>
+  </div>
+  <div class="cp-actions">
+    <button type="button" id="cp-now">Jetzt</button>
+    <button type="button" id="cp-apply" class="primary">Übernehmen</button>
+  </div>
+</div>
+
+<div id="controls-hint" class="show-once">
+<b>LMB</b> drehen · <b>Mausrad</b> zoomen<br>
+<b>RMB</b> verschieben · <b>Klick</b> Info<br>
+<b>Doppelklick</b> Fokus
+</div>
+
+<div id="syscheck-overlay">
+<div id="syscheck">
+<div class="syscheck-header">
+<div class="icon-box" id="syscheck-icon"><svg class="ico xl"><use href="#i-wrench"/></svg></div>
+<div class="title-block"><h2 id="syscheck-title">Systemcheck</h2><div class="subtitle" id="syscheck-subtitle">Prüfe...</div></div>
+<button id="close-syscheck" title="Schließen"><svg class="ico"><use href="#i-close"/></svg></button>
+</div>
+<div class="syscheck-body">
+<div class="summary-grid">
+<div class="summary-card total"><div class="value" id="stat-total">—</div><div class="label">Tests</div></div>
+<div class="summary-card ok-card"><div class="value" id="stat-ok">—</div><div class="label">OK</div></div>
+<div class="summary-card missing-card"><div class="value" id="stat-missing">—</div><div class="label">Fehler</div></div>
+<div class="summary-card optional-card"><div class="value" id="stat-optional">—</div><div class="label">Hinweise</div></div>
+</div>
+<div class="summary-grid" style="margin-top:8px">
+<div class="summary-card"><div class="value" id="health-webgl">—</div><div class="label">WebGL</div></div>
+<div class="summary-card"><div class="value" id="health-three">—</div><div class="label">Three.js</div></div>
+<div class="summary-card"><div class="value" id="health-storage">—</div><div class="label">Storage</div></div>
+<div class="summary-card"><div class="value" id="health-fps">—</div><div class="label">FPS</div></div>
+</div>
+<div class="check-section">
+<div class="check-section-title"><span>Umgebung</span></div>
+<div class="check-list" id="health-list"></div>
+</div>
+<div class="check-section">
+<div class="check-section-title"><span>Funktionen</span><span class="count" id="func-count">0</span></div>
+<div class="check-list" id="func-list"></div>
+</div>
+<div class="check-section">
+<div class="check-section-title"><span>Texturen</span><span class="count" id="check-count">0</span></div>
+<div class="check-list" id="check-list"></div>
+</div>
+<div class="check-section">
+<div class="check-section-title"><span>Log</span><span class="count" id="log-count">0</span></div>
+<div class="log-area" id="log-area"></div>
+</div>
+</div>
+<div class="syscheck-footer">
+<button class="warn-btn" id="btn-download-missing"><svg class="ico"><use href="#i-download"/></svg> Fehlende</button>
+<button id="btn-export-txt"><svg class="ico"><use href="#i-file"/></svg> .txt</button>
+<button id="btn-export-json"><svg class="ico"><use href="#i-json"/></svg> .json</button>
+<div class="spacer"></div>
+<button class="primary" id="btn-rerun-check"><svg class="ico"><use href="#i-reset"/></svg> Erneut</button>
+</div>
+</div>
+</div>
+
+<div id="downloader-overlay">
+<div id="downloader">
+<button id="close-downloader" title="Schließen"><svg class="ico"><use href="#i-close"/></svg></button>
+<h2>Textur-Downloader</h2>
+<p class="sub">Alle Texturen optional</p>
+<div class="dl-controls">
+<button id="dl-all"><svg class="ico"><use href="#i-download"/></svg> Alle</button>
+<button id="dl-earth">Erde + Mond</button>
+<button id="dl-planets">Planeten</button>
+<button id="dl-moons">Monde</button>
+</div>
+<h3 class="dl-section-title">Erde &amp; Mond</h3>
+<div class="dl-grid" id="dl-grid-earth"></div>
+<h3 class="dl-section-title">Planeten &amp; Sonne</h3>
+<div class="dl-grid" id="dl-planets-grid"></div>
+<h3 class="dl-section-title">Große Monde</h3>
+<div class="dl-grid" id="dl-grid-moons"></div>
+</div>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}
+</script>
+
+<script type="module" src="app.js"></script>
+
+<div id="demo-overlay">
+  <div id="demo-card">
+    <div class="demo-step" id="demo-step-label">Demo</div>
+    <h3 id="demo-title">—</h3>
+    <div class="demo-text" id="demo-text"></div>
+    <div id="demo-progress"><div id="demo-progress-bar"></div></div>
+    <div id="demo-actions">
+      <button type="button" id="demo-prev">Zurück</button>
+      <button type="button" id="demo-pause" class="primary">Pause</button>
+      <button type="button" id="demo-next">Weiter</button>
+      <button type="button" id="demo-stop">Beenden</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
