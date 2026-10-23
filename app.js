@@ -792,6 +792,7 @@ function updatePlanetSpins(date, dtDays){
 const planetMeshes=[],moonMeshes=[],allMoons=[],satelliteMeshes=[],clickableObjects=[];
 const orbitsGroup=new THREE.Group();scene.add(orbitsGroup);
 const moonOrbitsGroup=new THREE.Group();moonOrbitsGroup.visible=false;scene.add(moonOrbitsGroup);
+clickableObjects.push(sunMesh); // Sonne war vorher nicht antippbar
 
 PLANETS.forEach(pd=>{
   const pivot=new THREE.Group();scene.add(pivot);
@@ -1060,6 +1061,8 @@ function closeLightbox(){
   lb.classList.add('hidden');
   document.getElementById('lb-img').src='';
 }
+// Lightbox direkt an <body> hängen: im Fokus-Panel erbte sie pointer-events:none und lag unter Leiste/Uhr
+{const lb=document.getElementById('media-lightbox');if(lb&&lb.parentElement!==document.body)document.body.appendChild(lb);}
 document.getElementById('lb-close')?.addEventListener('click',closeLightbox);
 document.getElementById('media-lightbox')?.addEventListener('click',e=>{
   if(e.target.id==='media-lightbox')closeLightbox();
@@ -1159,6 +1162,11 @@ function enterFocusMode(mesh){
   const info=INFO_DATA[objectName]||{icon:'○',name:objectName,subtitle:'Objekt',desc:'',stats:{},fact:''};
   focusMode={name:objectName,type:isComet?'comet':(isMoon?'moon':'planet'),parentPlanet:planetName,mesh:mesh,isEarth:isEarth,pois:pois,planetRadius:mesh.geometry.parameters.radius||0.1,markers:[],activePoi:null};
   document.getElementById('info-panel').classList.remove('show');
+  if(isMobileLayout()){
+    // Mobil: Menü schließen, damit die Fokus-Ansicht frei ist
+    document.getElementById('sidebar').classList.add('collapsed');
+    document.querySelectorAll('.sb-tab[data-panel]').forEach(t=>t.classList.remove('active'));
+  }
   document.getElementById('focus-panel').classList.add('show');
 
   // Panels starten IMMER minimiert – User öffnet gezielt über Pills
@@ -1186,7 +1194,10 @@ function enterFocusMode(mesh){
   const worldPos=new THREE.Vector3();
   mesh.getWorldPosition(worldPos);
   const targetDist=Math.max(focusMode.planetRadius*(isComet?18:4.5), isComet?0.55:0.3);
-  const camOffset=new THREE.Vector3(0.4,0.4,1).normalize().multiplyScalar(targetDist);
+  // Kamera auf die beleuchtete Seite (Richtung Sonne) setzen, sonst sieht man oft nur die Nachtseite
+  const toSun=worldPos.lengthSq()>1e-6?worldPos.clone().negate().normalize():new THREE.Vector3(0,0,1);
+  const side=new THREE.Vector3().crossVectors(toSun,new THREE.Vector3(0,1,0)).normalize();
+  const camOffset=toSun.multiplyScalar(0.8).add(side.multiplyScalar(0.45)).add(new THREE.Vector3(0,0.35,0)).normalize().multiplyScalar(targetDist);
   const targetCamPos=worldPos.clone().add(camOffset);
   camFlight={startTime:performance.now(),duration:1600,startCam:camera.position.clone(),endCam:targetCamPos.clone(),startTarget:controls.target.clone(),endTarget:worldPos.clone(),onComplete:()=>{controls.minDistance=Math.max(focusMode.planetRadius*1.2,0.02);controls.maxDistance=Math.max(focusMode.planetRadius*30,5);}};
 }
@@ -1301,11 +1312,18 @@ document.getElementById('btn-min-right').addEventListener('click',()=>{
   document.getElementById('focus-right').classList.add('minimized');
   document.getElementById('focus-restore-right').style.display='flex';
 });
+// Mobil: immer nur ein Fokus-Fenster gleichzeitig, sonst wird es zu eng
+function minimizeFocusBox(side){
+  document.getElementById('focus-'+side).classList.add('minimized');
+  document.getElementById('focus-restore-'+side).style.display='flex';
+}
 document.getElementById('focus-restore-left').addEventListener('click',()=>{
+  if(isMobileLayout())minimizeFocusBox('right');
   document.getElementById('focus-left').classList.remove('minimized');
   document.getElementById('focus-restore-left').style.display='none';
 });
 document.getElementById('focus-restore-right').addEventListener('click',()=>{
+  if(isMobileLayout())minimizeFocusBox('left');
   document.getElementById('focus-right').classList.remove('minimized');
   document.getElementById('focus-restore-right').style.display='none';
 });
@@ -1937,7 +1955,7 @@ const PANEL_DEFS=[
   {id:'sim',title:'Simulation',icon:'#i-orbit'},
   {id:'light',title:'Licht-Studio',icon:'#i-light'},
   {id:'notes',title:'Notizen',icon:'#i-note'},
-  {id:'events',title:'Ereignisse',icon:'#i-orbit'},
+  {id:'events',title:'Ereignisse',icon:'#i-calendar'},
   {id:'route',title:'Route planen',icon:'#i-route'},
   {id:'tools',title:'Wartung',icon:'#i-wrench'}
 ];
@@ -2258,29 +2276,75 @@ document.querySelectorAll('.sb-tab[data-panel]').forEach(tab=>{
 // KLICK & DOPPELKLICK
 const raycaster=new THREE.Raycaster();
 const mouse=new THREE.Vector2();
-let downXY={x:0,y:0},clickTimeout=null,lastClickedObject=null;
-renderer.domElement.addEventListener('pointerdown',e=>{downXY.x=e.clientX;downXY.y=e.clientY;});
-renderer.domElement.addEventListener('pointerup',e=>{
-  if(Math.abs(e.clientX-downXY.x)>4||Math.abs(e.clientY-downXY.y)>4)return;
-  mouse.x=(e.clientX/innerWidth)*2-1;
-  mouse.y=-(e.clientY/innerHeight)*2+1;
+function isMobileLayout(){return matchMedia('(max-width:900px)').matches;}
+let clickTimeout=null,lastClickedObject=null;
+// Tipp-Erkennung: nur Ein-Finger-Gesten ohne Bewegung zählen (Pinch/Zwei-Finger-Pan löst keinen Klick aus)
+const activePointers=new Map();
+let gesture=null;
+const TAP_MOVE_PX=8, PICK_RADIUS_PX=matchMedia('(pointer: coarse)').matches?28:14;
+renderer.domElement.addEventListener('pointerdown',e=>{
+  activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(activePointers.size===1) gesture={x:e.clientX,y:e.clientY,t:performance.now(),multi:false,moved:false};
+  else if(gesture) gesture.multi=true;
+});
+renderer.domElement.addEventListener('pointermove',e=>{
+  if(!gesture||!activePointers.has(e.pointerId))return;
+  if(Math.hypot(e.clientX-gesture.x,e.clientY-gesture.y)>TAP_MOVE_PX)gesture.moved=true;
+});
+function endPointer(e){activePointers.delete(e.pointerId);if(activePointers.size===0&&e.type!=='pointerup')gesture=null;}
+renderer.domElement.addEventListener('pointercancel',endPointer);
+renderer.domElement.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse')endPointer(e);});
+
+function isShown(o){while(o){if(!o.visible)return false;o=o.parent;}return true;}
+function setPointerNdc(clientX,clientY){
+  const r=renderer.domElement.getBoundingClientRect();
+  mouse.x=((clientX-r.left)/r.width)*2-1;
+  mouse.y=-((clientY-r.top)/r.height)*2+1;
+  return r;
+}
+// Erst exakter Raycast, sonst nächstes Objekt im Bildschirm-Radius (kleine Monde, ISS, Kometen)
+const _pv=new THREE.Vector3();
+function pickObject(list,clientX,clientY){
+  const r=setPointerNdc(clientX,clientY);
   raycaster.setFromCamera(mouse,camera);
+  const vis=list.filter(isShown);
+  const hits=raycaster.intersectObjects(vis,false);
+  if(hits.length>0)return hits[0].object;
+  let best=null,bestD=PICK_RADIUS_PX;
+  for(const o of vis){
+    o.getWorldPosition(_pv);
+    _pv.project(camera);
+    if(_pv.z<-1||_pv.z>1)continue;
+    const sx=r.left+(_pv.x+1)/2*r.width, sy=r.top+(1-_pv.y)/2*r.height;
+    const d=Math.hypot(sx-clientX,sy-clientY);
+    if(d<bestD){bestD=d;best=o;}
+  }
+  return best;
+}
+renderer.domElement.addEventListener('pointerup',e=>{
+  const g=gesture;
+  activePointers.delete(e.pointerId);
+  if(activePointers.size===0)gesture=null;
+  if(!g||g.multi||g.moved||activePointers.size>0)return;
+  if(Math.hypot(e.clientX-g.x,e.clientY-g.y)>TAP_MOVE_PX)return;
+  // Mobil: Tipp in die Szene schließt ein offenes Menü-Panel
+  const sbEl=document.getElementById('sidebar');
+  if(isMobileLayout()&&sbEl&&!sbEl.classList.contains('collapsed')){
+    sbEl.classList.add('collapsed');
+    document.querySelectorAll('.sb-tab[data-panel]').forEach(t=>t.classList.remove('active'));
+    return;
+  }
   if(focusMode){
-    const markerMeshes=focusMode.markers.map(m=>m.mesh);
-    const hits=raycaster.intersectObjects(markerMeshes,false);
-    if(hits.length>0){
-      const marker=focusMode.markers.find(m=>m.mesh===hits[0].object);
-      if(marker){
-        document.querySelectorAll('.poi-item').forEach(i=>i.classList.remove('active'));
-        document.querySelectorAll('.poi-item').forEach(it=>{const n=it.querySelector('.poi-name');if(n&&n.textContent===marker.poi.name)it.classList.add('active');});
-        focusOnPoi(marker.poi);
-      }
+    const marker=focusMode.markers.length?(()=>{const m=pickObject(focusMode.markers.map(m=>m.mesh),e.clientX,e.clientY);return m&&focusMode.markers.find(x=>x.mesh===m);})():null;
+    if(marker){
+      document.querySelectorAll('.poi-item').forEach(i=>i.classList.remove('active'));
+      document.querySelectorAll('.poi-item').forEach(it=>{const n=it.querySelector('.poi-name');if(n&&n.textContent===marker.poi.name)it.classList.add('active');});
+      focusOnPoi(marker.poi);
     }
     return;
   }
-  const hits=raycaster.intersectObjects(clickableObjects,false);
-  if(hits.length===0)return;
-  const obj=hits[0].object;
+  const obj=pickObject(clickableObjects,e.clientX,e.clientY);
+  if(!obj)return;
   const name=obj.userData.planetName;
 
   // Haptisches Feedback
@@ -2293,7 +2357,7 @@ renderer.domElement.addEventListener('pointerup',e=>{
   }
   lastClickedObject=obj;
   clearTimeout(clickTimeout);
-  const delay=matchMedia('(hover: none)').matches?250:300;
+  const delay=350;
   clickTimeout=setTimeout(()=>{showInfoPreview(name);lastClickedObject=null;},delay);
 });
 function showInfoPreview(name){
@@ -2672,6 +2736,8 @@ document.getElementById('btn-hide-ui')?.addEventListener('click',()=>{
 (function(){
   const key='ss3d_first_visit_seen';
   if(!localStorage.getItem(key)){
+    // Auf dem Handy würde das Panel die ganze Szene verdecken
+    if(matchMedia('(max-width:900px)').matches){localStorage.setItem(key,'1');return;}
     const sb=document.getElementById('sidebar');
     if(sb) sb.classList.remove('collapsed');
     localStorage.setItem(key,'1');

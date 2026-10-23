@@ -226,12 +226,7 @@ body.theme-light .focus-exit-pill{
   color:#1a1e2a;
   border-color:rgba(0,0,0,0.15);
 }
-@media(max-width:900px){
-  .focus-exit-pill{
-    top:auto;
-    bottom:max(180px, calc(env(safe-area-inset-bottom) + 170px));
-  }
-}
+
 @media(max-width:480px){
   .focus-exit-pill span{display:none;}
   .focus-exit-pill{width:44px;height:44px;padding:0;border-radius:50%;justify-content:center;}
@@ -253,8 +248,8 @@ body.theme-light .focus-exit-pill{
 .focus-stat-value{font-size:11.5px;font-weight:500;color:white;line-height:1.3;}
 .focus-fact{font-size:11.5px;line-height:1.55;color:rgba(255,230,190,0.92);padding:12px 14px;margin-top:14px;background:rgba(255,170,60,0.06);border:1px solid rgba(255,170,60,0.18);border-radius:8px;}
 .focus-fact .fact-title{color:rgba(255,200,100,0.95);display:block;margin-bottom:5px;font-size:9.5px;text-transform:uppercase;letter-spacing:0.8px;font-weight:600;}
-.poi-header{padding:14px 16px 10px;border-bottom:1px solid rgba(255,255,255,0.08);position:sticky;top:0;background:rgba(12,14,24,0.95);backdrop-filter:blur(20px);z-index:5;}
-.poi-header h3{font-size:12px;color:white;font-weight:600;letter-spacing:0.3px;display:flex;align-items:center;gap:7px;margin-bottom:10px;}
+.poi-header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px 10px;margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.08);position:sticky;top:0;background:rgba(12,14,24,0.95);backdrop-filter:blur(20px);z-index:5;}
+.poi-header h3{font-size:12px;color:white;font-weight:600;letter-spacing:0.3px;display:flex;align-items:center;gap:7px;margin:0;}
 .poi-search-row{display:flex;gap:5px;}
 .poi-list{padding:10px 12px 16px;}
 .poi-item{padding:9px 11px;margin-bottom:4px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:9px;}
@@ -639,7 +634,7 @@ body.theme-light .edu-tip{background:rgba(255,170,60,0.1);color:#7a4a00;border-c
 .video-card iframe{width:100%;aspect-ratio:16/9;border:0;display:block;background:#000;}
 .video-card a.vc-link{display:block;padding:8px 10px 10px;font-size:11px;color:rgba(120,200,255,0.95);text-decoration:none;}
 .video-card a.vc-link:hover{text-decoration:underline;}
-#media-lightbox{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.88);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+#media-lightbox{position:fixed;inset:0;z-index:700;pointer-events:auto;background:rgba(0,0,0,0.88);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
 #media-lightbox.hidden{display:none;}
 #media-lightbox img{max-width:min(960px,94vw);max-height:75vh;object-fit:contain;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,0.6);}
 #lb-cap{margin-top:12px;color:rgba(230,240,255,0.9);font-size:13px;text-align:center;max-width:90vw;}
@@ -692,6 +687,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;}
 
   /* Sidebar als echtes Overlay */
   #sidebar{position:fixed;top:0;left:0;bottom:0;width:52px;}
+  #sidebar:not(.collapsed){z-index:120;}
   #sidebar:not(.icons-only){width:52px;}
   #sidebar .sb-tab-label{display:none!important;}
   #sidebar.icons-only{width:52px;}
@@ -708,25 +704,37 @@ html,body{height:100%;height:100dvh;overflow:hidden;}
   .sb-panel-close{width:40px;height:40px;}
 
   /* Fokus-Panel: gestapelt, Inset zurücksetzen */
+  /* Nur mit .show sichtbar – vorher war das Panel auf Mobil immer eingeblendet */
   #focus-panel{
-    display:flex;flex-direction:column;align-items:stretch;
-    padding:8px;gap:8px;top:auto;bottom:0;left:0;right:0;
-    height:auto;max-height:48vh;
+    flex-direction:column;align-items:stretch;justify-content:flex-end;
+    padding:8px 8px max(8px, env(safe-area-inset-bottom)) 60px;gap:8px;
+    top:auto;bottom:0;left:0;right:0;
+    height:auto;max-height:62vh;
+    z-index:115;
   }
   #focus-panel.show{display:flex;}
+  /* Bedienknöpfe im Fokus fest am Bildschirm statt relativ zum Panel */
+  .focus-exit-pill{position:fixed;top:max(10px, env(safe-area-inset-top));bottom:auto;}
+  .focus-restore{position:fixed;}
+  #fps-display{display:none;}
   #focus-left,#focus-right{
     position:relative;
     inset:auto !important;
     width:100% !important;max-width:100%;
-    max-height:42vh;
+    max-height:30vh;
+    flex:0 1 auto;
   }
+  /* Nur ein Fokus-Fenster offen → mehr Platz */
+  #focus-left.minimized ~ #focus-right,
+  #focus-panel:has(#focus-right.minimized) #focus-left{max-height:52vh;}
   .focus-body{padding:12px;}
 
   /* Info-Panel: top resetten */
   #info-panel{
     top:auto;
-    left:8px;right:8px;width:auto;max-width:none;
+    left:60px;right:8px;width:auto;max-width:none;
     bottom:max(12px, env(safe-area-inset-bottom));
+    z-index:116;
     max-height:55vh;
   }
 
@@ -737,6 +745,17 @@ html,body{height:100%;height:100dvh;overflow:hidden;}
     min-width:44px;min-height:44px;
   }
   .planet-item{padding:10px 12px;}
+  .toggle-row{min-height:44px;padding:8px 4px;}
+  .switch{width:40px;height:22px;border-radius:11px;}
+  .switch::after{width:18px;height:18px;}
+  .toggle-row.active .switch::after{transform:translateX(18px);}
+  input[type=range]{height:6px;margin:10px 0;}
+  input[type=range]::-webkit-slider-thumb{width:26px;height:26px;}
+  input[type=range]::-moz-range-thumb{width:26px;height:26px;border:none;background:#00aaff;border-radius:50%;}
+  .slider-row{margin-top:14px;}
+  .speed-chip{min-height:48px;}
+  .action-btn{min-height:44px;}
+  #lb-close{width:48px;height:48px;top:max(16px, env(safe-area-inset-top));}
   .event-item{padding:12px;min-height:48px;}
   .edu-tab,.fr-tab{min-height:40px;font-size:12px;}
 
@@ -760,11 +779,12 @@ html,body{height:100%;height:100dvh;overflow:hidden;}
     bottom:max(180px, calc(env(safe-area-inset-bottom) + 170px));
   }
 
+  /* Fokus-Steuerung oben in einer Reihe, Fenster unten */
   #focus-restore-left,#focus-restore-right{
-    top:auto;bottom:max(70px, calc(12px + env(safe-area-inset-bottom)));
-    height:48px;border-radius:24px;
+    top:max(10px, env(safe-area-inset-top));bottom:auto;
+    height:44px;border-radius:22px;
   }
-  #focus-restore-left{left:56px;}
+  #focus-restore-left{left:60px;}
   #focus-restore-right{right:12px;}
   #ui-reveal{
     top:auto;bottom:max(16px, env(safe-area-inset-bottom));
@@ -781,12 +801,13 @@ html,body{height:100%;height:100dvh;overflow:hidden;}
   #sidebar{width:48px;}
   .sb-tab{width:42px;height:42px;}
   .sb-panel{left:48px;width:calc(100vw - 48px);}
+  #info-panel{left:56px;}
   #sim-clock-wrap{bottom:max(44px, env(safe-area-inset-bottom));}
   #clock-transport{gap:6px;}
   #focus-panel{max-height:55vh;}
-  #focus-restore-left{left:52px;}
+  #focus-restore-left{left:56px;}
   .focus-restore .fr-restore-label{display:none;}
-  .focus-restore{width:48px;padding:0;border-radius:24px;justify-content:center;}
+  .focus-restore{width:44px;padding:0;border-radius:22px;justify-content:center;}
 }
 
 /* Demo overlay */
@@ -829,3 +850,8 @@ button,.sb-tab,.toggle-row,.planet-item,.poi-item,
 .event-item,.speed-chip,.preset-btn,.fl-tab,.fr-tab,.edu-tab{
   touch-action:manipulation;
 }
+/* Touch-Geräte: Löschen-Button ohne Hover sichtbar */
+@media(hover:none){
+  .note-card-del{opacity:1;}
+}
+.log-line.error{color:rgba(255,150,150,0.9);}
