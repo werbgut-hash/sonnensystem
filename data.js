@@ -2,23 +2,25 @@
 // DATA.JS - Alle Daten des Sonnensystems
 // ============================================================
 
+// Texturen liegen lokal im Projektordner (offline-fähig). Pluto, Ceres und Monde kommen noch von Wikimedia,
+// fehlen sie, wird eine prozedurale Ersatz-Textur genutzt.
 export const TEXTURES = {
   earth: [
-    { name:'earth_atmos_2048.jpg', desc:'Erdoberfläche', icon:'⊕', url:'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_atmos_2048.jpg', category:'Erde & Mond', required:true },
-    { name:'earth_normal_2048.jpg', desc:'Normalen-Map', icon:'⌗', url:'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_normal_2048.jpg', category:'Erde & Mond', required:false },
-    { name:'earth_specular_2048.jpg', desc:'Specular-Map', icon:'◇', url:'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_specular_2048.jpg', category:'Erde & Mond', required:false },
-    { name:'earth_clouds_1024.png', desc:'Wolkenschicht', icon:'≡', url:'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_clouds_1024.png', category:'Erde & Mond', required:false },
-    { name:'moon_1024.jpg', desc:'Erdmond', icon:'☾', url:'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/moon_1024.jpg', category:'Erde & Mond', required:false }
+    { name:'earth_atmos_2048.jpg', desc:'Erdoberfläche', icon:'⊕', url:'earth_atmos_2048.jpg', category:'Erde & Mond', required:true },
+    { name:'earth_normal_2048.jpg', desc:'Normalen-Map', icon:'⌗', url:'earth_normal_2048.jpg', category:'Erde & Mond', required:false },
+    { name:'earth_specular_2048.jpg', desc:'Specular-Map', icon:'◇', url:'earth_specular_2048.jpg', category:'Erde & Mond', required:false },
+    { name:'earth_clouds_1024.png', desc:'Wolkenschicht', icon:'≡', url:'earth_clouds_1024.png', category:'Erde & Mond', required:false },
+    { name:'moon_1024.jpg', desc:'Erdmond', icon:'☾', url:'moon_1024.jpg', category:'Erde & Mond', required:false }
   ],
   planets: [
-    { name:'sunmap.jpg', desc:'Sonne', icon:'☉', url:'https://cdn.jsdelivr.net/gh/jeromeetienne/threex.planets@master/images/sunmap.jpg', category:'Planeten', required:true },
-    { name:'mercurymap.jpg', desc:'Merkur', icon:'☿', url:'https://cdn.jsdelivr.net/gh/jeromeetienne/threex.planets@master/images/mercurymap.jpg', category:'Planeten', required:true },
-    { name:'venusmap.jpg', desc:'Venus', icon:'♀', url:'https://cdn.jsdelivr.net/gh/jeromeetienne/threex.planets@master/images/venusmap.jpg', category:'Planeten', required:true },
-    { name:'marsmap1k.jpg', desc:'Mars', icon:'♂', url:'https://cdn.jsdelivr.net/gh/jeromeetienne/threex.planets@master/images/marsmap1k.jpg', category:'Planeten', required:true },
-    { name:'jupitermap.jpg', desc:'Jupiter', icon:'♃', url:'https://cdn.jsdelivr.net/gh/jeromeetienne/threex.planets@master/images/jupitermap.jpg', category:'Planeten', required:true },
-    { name:'saturnmap.jpg', desc:'Saturn', icon:'♄', url:'https://cdn.jsdelivr.net/gh/jeromeetienne/threex.planets@master/images/saturnmap.jpg', category:'Planeten', required:true },
-    { name:'uranusmap.jpg', desc:'Uranus', icon:'♅', url:'https://cdn.jsdelivr.net/gh/jeromeetienne/threex.planets@master/images/uranusmap.jpg', category:'Planeten', required:true },
-    { name:'neptunemap.jpg', desc:'Neptun', icon:'♆', url:'https://cdn.jsdelivr.net/gh/jeromeetienne/threex.planets@master/images/neptunemap.jpg', category:'Planeten', required:true },
+    { name:'sunmap.jpg', desc:'Sonne', icon:'☉', url:'2k_sun.jpg', category:'Planeten', required:true },
+    { name:'mercurymap.jpg', desc:'Merkur', icon:'☿', url:'2k_mercury.jpg', category:'Planeten', required:true },
+    { name:'venusmap.jpg', desc:'Venus', icon:'♀', url:'2k_venus_surface.jpg', category:'Planeten', required:true },
+    { name:'marsmap1k.jpg', desc:'Mars', icon:'♂', url:'2k_mars.jpg', category:'Planeten', required:true },
+    { name:'jupitermap.jpg', desc:'Jupiter', icon:'♃', url:'2k_jupiter.jpg', category:'Planeten', required:true },
+    { name:'saturnmap.jpg', desc:'Saturn', icon:'♄', url:'2k_saturn.jpg', category:'Planeten', required:true },
+    { name:'uranusmap.jpg', desc:'Uranus', icon:'♅', url:'2k_uranus.jpg', category:'Planeten', required:true },
+    { name:'neptunemap.jpg', desc:'Neptun', icon:'♆', url:'2k_neptune.jpg', category:'Planeten', required:true },
     { name:'plutomap.jpg', desc:'Pluto', icon:'♇', url:'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Pluto_in_True_Color_-_High-Res.jpg/1024px-Pluto_in_True_Color_-_High-Res.jpg', category:'Planeten', required:false },
     { name:'ceresmap.jpg', desc:'Ceres', icon:'⚳', url:'https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Ceres_-_RC3_-_Haulani_Crater_%2822381131691%29.jpg/1024px-Ceres_-_RC3_-_Haulani_Crater_%2822381131691%29.jpg', category:'Planeten', required:false }
   ],

@@ -55,7 +55,7 @@ async function runSystemCheck() {
   systemHealth.webgl = checkWebGL();
   funcOk('WebGL', systemHealth.webgl.ok, systemHealth.webgl.info, 'Umgebung');
   systemHealth.three = await checkThreeCdn();
-  funcOk('Three.js CDN', systemHealth.three.ok, systemHealth.three.ok?'erreichbar':'nicht erreichbar', 'Umgebung');
+  funcOk('Three.js (lokal)', systemHealth.three.ok, systemHealth.three.ok?'geladen':'fehlt', 'Umgebung');
   systemHealth.storage = checkLocalStorage();
   funcOk('LocalStorage', systemHealth.storage.ok, systemHealth.storage.info||'', 'Umgebung');
   addLog('FPS-Stichprobe…', 'info');
@@ -273,10 +273,7 @@ function checkWebGL(){
 
 async function checkThreeCdn(){
   try {
-    const urls = [
-      'https://unpkg.com/three@0.160.0/build/three.module.js',
-      'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js'
-    ];
+    const urls = [ resolveAsset('vendor/three/build/three.module.min.js') ];
     for(const u of urls){
       try {
         const r = await fetch(u, {method:'HEAD', mode:'cors'});
@@ -317,7 +314,7 @@ function renderHealthList(){
   if(!le) return;
   const rows = [
     ['WebGL', systemHealth.webgl?.ok, systemHealth.webgl?.info||'—'],
-    ['Three.js CDN', systemHealth.three?.ok, systemHealth.three?.ok?'erreichbar':'nicht erreichbar'],
+    ['Three.js (lokal)', systemHealth.three?.ok, systemHealth.three?.ok?'geladen':'fehlt'],
     ['LocalStorage', systemHealth.storage?.ok, systemHealth.storage?.info||'—'],
     ['FPS', systemHealth.fps>=15, `≈ ${systemHealth.fps||'—'} FPS`],
   ];
@@ -412,7 +409,7 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
 controls.minDistance = 0.05;
-controls.maxDistance = 1000;
+controls.maxDistance = 1400;
 controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
 
 // Desktop: MSAA im Render-Target statt Canvas-Antialiasing
@@ -476,7 +473,7 @@ scene.add(milkyWaySphere);
   const p = new Float32Array(n*3);
   const col = new Float32Array(n*3);
   for (let i = 0; i < n*3; i += 3) {
-    const r = 200 + Math.random()*1200;
+    const r = 1500 + Math.random()*800; // außerhalb des Kuipergürtels, innerhalb der Milchstraßen-Kugel
     const t = Math.random()*Math.PI*2;
     const ph = Math.acos(2*Math.random()-1);
     p[i] = Math.sin(ph)*Math.cos(t)*r;
@@ -487,8 +484,8 @@ scene.add(milkyWaySphere);
   }
   g.setAttribute('position', new THREE.BufferAttribute(p,3));
   g.setAttribute('color', new THREE.BufferAttribute(col,3));
-  const starMat=new THREE.PointsMaterial({ size:1.0, vertexColors:true, transparent:true, opacity:0.55, sizeAttenuation:true });
-  starMat.userData.baseOpacity=0.55;starMat.userData.baseSize=1.0;
+  const starMat=new THREE.PointsMaterial({ size:2.6, vertexColors:true, transparent:true, opacity:0.55, sizeAttenuation:true });
+  starMat.userData.baseOpacity=0.55;starMat.userData.baseSize=2.6;
   const starPoints=new THREE.Points(g, starMat);
   scene.add(starPoints);
   window.__starMat=starMat;
@@ -564,6 +561,8 @@ function regTex(filename){
   return texLoader.load(url,()=>{texLoadStatus[filename]='ok';loadedCount++;chkLoaded();},undefined,()=>{texLoadStatus[filename]='fail';loadedCount++;chkLoaded();});
 }
 function chkLoaded(){if(loadedCount>=totalTextures)document.getElementById('loading').style.display='none';}
+// Spätestens nach 8 s ausblenden, auch wenn externe Texturen (Wikimedia) noch hängen
+setTimeout(()=>{const l=document.getElementById('loading');if(l)l.style.display='none';},8000);
 function countTextureFallbacks(){
   let loaded=0, failed=0, pending=0, procedural=0;
   Object.values(texLoadStatus).forEach(s=>{
@@ -768,7 +767,10 @@ function keplerPosition(el, date){
   const n = 360 / el.period;
   const L = (el.L + n * d) % 360;
   const M = deg2rad(((L - el.ϖ + 540) % 360) - 180);
-  const E = solveKepler(M, el.e);
+  return orbitPointFromE(el, solveKepler(M, el.e));
+}
+// Punkt auf der (geneigten, exzentrischen) Bahn für eine exzentrische Anomalie E
+function orbitPointFromE(el, E){
   const cosE = Math.cos(E), sinE = Math.sin(E);
   const xv = el.a * (cosE - el.e);
   const yv = el.a * Math.sqrt(1 - el.e*el.e) * sinE;
@@ -855,9 +857,14 @@ PLANETS.forEach(pd=>{
   lbl.element.className='planet-label';lbl.element.textContent=pd.name;
   lbl.position.set(0,pd.radius+.25,0);system.add(lbl);
   const el0=ORBITAL_ELEMENTS[pd.name];
-  const orbR=(el0?el0.a:pd.distance/SCENE_AU)*SCENE_AU;
   const orbitPts=[];
-  for(let i=0;i<=128;i++){const a=(i/128)*Math.PI*2;orbitPts.push(new THREE.Vector3(Math.cos(a)*orbR,0,Math.sin(a)*orbR));}
+  if(el0){
+    // Echte Ellipse mit Neigung – vorher Kreise, Merkur/Pluto lagen sichtbar neben ihrer Bahnlinie
+    for(let i=0;i<=256;i++)orbitPts.push(orbitPointFromE(el0,(i/256)*Math.PI*2));
+  }else{
+    const orbR=pd.distance;
+    for(let i=0;i<=128;i++){const a=(i/128)*Math.PI*2;orbitPts.push(new THREE.Vector3(Math.cos(a)*orbR,0,Math.sin(a)*orbR));}
+  }
   const orbitLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints(orbitPts),new THREE.LineBasicMaterial({color:0x334466,transparent:true,opacity:.5}));
   orbitsGroup.add(orbitLine);
   pd._orbitLine=orbitLine;
@@ -916,43 +923,52 @@ hubbleMesh.position.set(.35,-.03,0);hubbleMesh.rotation.z=Math.PI/2;
 hubbleMesh.userData={planetName:'Hubble',type:'satellite',mesh:hubbleMesh};
 hubbleGroup.add(hubbleMesh);satelliteMeshes.push(hubbleMesh);clickableObjects.push(hubbleMesh);
 
-// Asteroiden
+// Asteroiden (Hauptgürtel 2,2–3,3 AE, gleicher Maßstab wie die Planeten)
 const asteroidBelt=new THREE.Group();scene.add(asteroidBelt);
 const asteroidCount=2500;
-const asteroidGeo=new THREE.DodecahedronGeometry(.012,0);
+const asteroidGeo=new THREE.DodecahedronGeometry(.03,0);
 const asteroidMat=new THREE.MeshPhongMaterial({color:0x9a8a7a,shininess:3});
 const asteroidInstanced=new THREE.InstancedMesh(asteroidGeo,asteroidMat,asteroidCount);
 asteroidInstanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);asteroidBelt.add(asteroidInstanced);
 const asteroidData=[];const dummy=new THREE.Object3D();
-for(let i=0;i<asteroidCount;i++){asteroidData.push({angle:Math.random()*Math.PI*2,radius:10.2+Math.random()*1.6,yOffset:(Math.random()-.5)*.5,rotSpeed:.05+Math.random()*.05,scale:.5+Math.random()*1.5});}
+for(let i=0;i<asteroidCount;i++){asteroidData.push({angle:Math.random()*Math.PI*2,radius:(2.2+Math.random()*1.1)*SCENE_AU,yOffset:(Math.random()-.5)*1.6,rotSpeed:.05+Math.random()*.05,scale:.5+Math.random()*1.5});}
 
-// Kuiper
+// Kuiper (30–50 AE)
 const kuiperBelt=new THREE.Group();scene.add(kuiperBelt);
 const kuiperCount=1500;
-const kuiperGeo=new THREE.DodecahedronGeometry(.03,0);
+const kuiperGeo=new THREE.DodecahedronGeometry(.22,0);
 const kuiperMat=new THREE.MeshPhongMaterial({color:0xaaccee,shininess:10,emissive:0x112244});
 const kuiperInstanced=new THREE.InstancedMesh(kuiperGeo,kuiperMat,kuiperCount);
 kuiperInstanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);kuiperBelt.add(kuiperInstanced);
 const kuiperData=[];
-for(let i=0;i<kuiperCount;i++){kuiperData.push({angle:Math.random()*Math.PI*2,radius:35+Math.random()*8,yOffset:(Math.random()-.5)*1.5,rotSpeed:.01+Math.random()*.02,scale:.5+Math.random()*1.5});}
+for(let i=0;i<kuiperCount;i++){kuiperData.push({angle:Math.random()*Math.PI*2,radius:(30+Math.random()*20)*SCENE_AU,yOffset:(Math.random()-.5)*30,rotSpeed:.01+Math.random()*.02,scale:.5+Math.random()*1.5});}
 
 // KOMETEN
 const cometsGroup=new THREE.Group();scene.add(cometsGroup);
 const cometObjects=[];
-const AU=1.8;
+// Kometen im selben Maßstab wie die Planeten (vorher 1 AE = 1,8 statt 7 → Perihel lag innerhalb der Merkurbahn).
+// Sehr lange Bahnen werden optisch gestaucht: Perihel bleibt echt, Aphel wird auf max. 60 AE begrenzt.
+const AU=SCENE_AU, COMET_MAX_APHEL=60;
+function cometShape(cd){
+  const q=cd.a*(1-cd.e), Q=cd.a*(1+cd.e);
+  if(Q<=COMET_MAX_APHEL)return {a:cd.a,e:cd.e};
+  const Q2=COMET_MAX_APHEL;
+  return {a:(q+Q2)/2,e:(Q2-q)/(Q2+q)};
+}
 COMETS.forEach(cd=>{
   const orbitGroup=new THREE.Group();
   orbitGroup.rotation.y=cd.node;
   orbitGroup.rotation.z=cd.incl;
   orbitGroup.rotation.y+=cd.peri;
   cometsGroup.add(orbitGroup);
-  const a=cd.a*AU;
-  const b=a*Math.sqrt(1-cd.e*cd.e);
-  const c=a*cd.e;
+  const shp=cometShape(cd);
+  const a=shp.a*AU;
+  const b=a*Math.sqrt(1-shp.e*shp.e);
+  const c=a*shp.e;
   const orbitPts=[];
-  for(let i=0;i<=256;i++){const th=(i/256)*Math.PI*2;const x=a*Math.cos(th)-c;const z=b*Math.sin(th);orbitPts.push(new THREE.Vector3(x,0,z));}
+  for(let i=0;i<=512;i++){const th=(i/512)*Math.PI*2;const x=a*Math.cos(th)-c;const z=b*Math.sin(th);orbitPts.push(new THREE.Vector3(x,0,z));}
   const cOrbitGeo=new THREE.BufferGeometry().setFromPoints(orbitPts);
-  const cOrbitMat=new THREE.LineDashedMaterial({color:0x334466,transparent:true,opacity:0.45,dashSize:0.35,gapSize:0.25});
+  const cOrbitMat=new THREE.LineDashedMaterial({color:0x334466,transparent:true,opacity:0.45,dashSize:1.2,gapSize:0.8});
   const cOrbitLine=new THREE.Line(cOrbitGeo,cOrbitMat);
   cOrbitLine.computeLineDistances();
   orbitGroup.add(cOrbitLine);
@@ -1230,7 +1246,7 @@ function exitFocusMode(){
   document.getElementById('focus-right').classList.remove('minimized');
   document.getElementById('focus-restore-left').style.display='none';
   document.getElementById('focus-restore-right').style.display='none';
-  controls.minDistance=0.05;controls.maxDistance=1000;
+  controls.minDistance=0.05;controls.maxDistance=1400;
   const targetCamPos=new THREE.Vector3(0,30,55);
   camFlight={startTime:performance.now(),duration:1500,startCam:camera.position.clone(),endCam:targetCamPos.clone(),startTarget:controls.target.clone(),endTarget:new THREE.Vector3(0,0,0)};
 }
@@ -1899,7 +1915,7 @@ function calcRoute(){
     const pa=getBodyWorldPos(from),pb=getBodyWorldPos(to);
     if(!pa||!pb){res.classList.add('show');res.innerHTML='<div class="rr-title">Position unbekannt</div>';return;}
     const simDist=pa.distanceTo(pb);
-    km=(simDist/6.4)*ROUTE_AU_KM;
+    km=(simDist/SCENE_AU)*ROUTE_AU_KM;
   }
   const chip=document.querySelector('.speed-chip.active');
   const kmh=chip?parseFloat(chip.dataset.kmh):5;
