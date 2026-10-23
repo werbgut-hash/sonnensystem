@@ -40,7 +40,7 @@ export const ALL_TEXTURES = [...TEXTURES.earth, ...TEXTURES.planets, ...TEXTURES
 
 // ===== KOMETEN =====
 export const COMETS = [
-  { name:'1P/Halley', shortName:'Halley', a:17.8, e:0.967, incl:2.85, node:1.05, peri:1.85, period:75.3, radius:0.06,
+  { name:'1P/Halley', shortName:'Halley', perihelion:'1986-02-09', a:17.8, e:0.967, incl:2.85, node:1.05, peri:1.85, period:75.3, radius:0.06,
     desc:'Der berühmteste Komet der Geschichte. Sein Erscheinen wurde seit 240 v. Chr. dokumentiert. Zuletzt 1986 im inneren Sonnensystem - nächste Wiederkehr 2061.',
     stats:{'Typ':'Kurzperiodischer Komet','Kern-Durchmesser':'ca. 15 × 8 km','Umlaufzeit':'75–76 Jahre','Perihel':'0,586 AE','Aphel':'35,1 AE','Bahnneigung':'162,3°','Letztes Perihel':'9. Februar 1986','Nächstes Perihel':'28. Juli 2061','Entdecker':'Edmond Halley (1705)'},
     fact:'Halley bewies 1705, dass die Kometen von 1531, 1607 und 1682 identisch sind - der erste periodische Komet.' },
@@ -48,19 +48,19 @@ export const COMETS = [
     desc:'Ein erdnaher Asteroid, der 2004 kurzzeitig als potenzielle Gefahr galt. Am 13. April 2029 wird er in nur 31.000 km Entfernung an der Erde vorbeifliegen - näher als manche Satelliten.',
     stats:{'Typ':'Erdnaher Asteroid (NEO)','Durchmesser':'ca. 370 m','Masse':'ca. 6,1 × 10¹⁰ kg','Umlaufzeit':'323,6 Tage','Perihel':'0,746 AE','Aphel':'1,099 AE','Bahnexzentrizität':'0,191','Nächste Annäherung':'13. April 2029','Entfernung 2029':'ca. 31.000 km'},
     fact:'Am 13. April 2029 wird Apophis als heller Punkt am Himmel sichtbar sein - mit bloßem Auge in Europa, Afrika und Asien.' },
-  { name:'C/1995 O1 (Hale-Bopp)', shortName:'Hale-Bopp', a:186, e:0.995, incl:1.56, node:4.03, peri:2.71, period:2534, radius:0.35,
+  { name:'C/1995 O1 (Hale-Bopp)', shortName:'Hale-Bopp', perihelion:'1997-04-01', a:186, e:0.995, incl:1.56, node:4.03, peri:2.71, period:2534, radius:0.35,
     desc:'Einer der hellsten Kometen des 20. Jahrhunderts. 1997 war er 18 Monate lang mit bloßem Auge sichtbar - länger als jeder andere Komet in der Geschichte.',
     stats:{'Typ':'Langperiodischer Komet','Kern-Durchmesser':'ca. 60 km','Umlaufzeit':'ca. 2.534 Jahre','Perihel':'0,914 AE','Aphel':'371 AE','Bahnneigung':'89,4°','Letztes Perihel':'1. April 1997','Entdeckung':'23. Juli 1995','Entdecker':'Alan Hale & Thomas Bopp'},
     fact:'Hale-Bopp war so hell, dass er 1997 sogar von der Internationalen Raumstation aus gefilmt werden konnte.' },
-  { name:'2P/Encke', shortName:'Encke', a:2.22, e:0.848, incl:0.2, node:5.88, peri:3.31, period:3.3, radius:0.04,
+  { name:'2P/Encke', shortName:'Encke', perihelion:'2023-10-22', a:2.22, e:0.848, incl:0.2, node:5.88, peri:3.31, period:3.3, radius:0.04,
     desc:'Komet mit der kürzesten bekannten Umlaufzeit. Verantwortlich für den jährlichen Tauriden-Meteorstrom im Oktober/November.',
     stats:{'Typ':'Kurzperiodischer Komet','Kern-Durchmesser':'ca. 4,8 km','Umlaufzeit':'3,30 Jahre','Perihel':'0,336 AE','Aphel':'4,10 AE','Bahnneigung':'11,8°','Letztes Perihel':'22. Oktober 2023','Nächstes Perihel':'2027','Entdecker':'Pierre Méchain (1786)'},
     fact:'Encke wurde nach Johann Franz Encke benannt, der 1819 seine Bahn berechnete.' },
-  { name:'109P/Swift-Tuttle', shortName:'Swift-Tuttle', a:26.1, e:0.963, incl:1.99, node:2.06, peri:2.21, period:133, radius:0.09,
+  { name:'109P/Swift-Tuttle', shortName:'Swift-Tuttle', perihelion:'1992-12-12', a:26.1, e:0.963, incl:1.99, node:2.06, peri:2.21, period:133, radius:0.09,
     desc:'Der Ursprungskörper der Perseiden - eines der bekanntesten Meteorströme, der jedes Jahr im August zu sehen ist.',
     stats:{'Typ':'Kurzperiodischer Komet','Kern-Durchmesser':'ca. 26 km','Umlaufzeit':'133 Jahre','Perihel':'0,96 AE','Aphel':'51,2 AE','Bahnneigung':'113,5°','Letztes Perihel':'Dezember 1992','Nächstes Perihel':'Juli 2126','Entdecker':'Lewis Swift & Horace Tuttle (1862)'},
     fact:'Die Perseiden-Meteore sind Staubpartikel, die Swift-Tuttle auf seiner Bahn hinterlassen hat.' },
-  { name:'C/2020 F3 (NEOWISE)', shortName:'NEOWISE', a:358, e:0.9992, incl:2.42, node:1.05, peri:3.43, period:6766, radius:0.14,
+  { name:'C/2020 F3 (NEOWISE)', shortName:'NEOWISE', perihelion:'2020-07-03', a:358, e:0.9992, incl:2.42, node:1.05, peri:3.43, period:6766, radius:0.14,
     desc:'Der hellste Komet seit Hale-Bopp. 2020 war er mit bloßem Auge sichtbar und wurde zum meistfotografierten Kometen des Jahres.',
     stats:{'Typ':'Langperiodischer Komet','Kern-Durchmesser':'ca. 5 km','Umlaufzeit':'ca. 6.766 Jahre','Perihel':'0,295 AE','Aphel':'715 AE','Bahnneigung':'128,9°','Letztes Perihel':'3. Juli 2020','Entdeckung':'27. März 2020','Entdecker':'NEOWISE-Teleskop (NASA)'},
     fact:'NEOWISE wird erst im Jahr 8786 wiederkehren.' }

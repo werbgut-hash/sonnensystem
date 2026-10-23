@@ -754,8 +754,9 @@ function julianDaysSinceJ2000(date){ return (date.getTime() - J2000) / 86400000;
 function deg2rad(d){ return d * Math.PI / 180; }
 function rad2deg(r){ return r * 180 / Math.PI; }
 function solveKepler(M, e){
-  let E = M;
-  for(let i=0;i<12;i++){
+  // Für sehr exzentrische Bahnen (Kometen) von ±π starten, sonst divergiert Newton
+  let E = e<0.8 ? M : (M>=0 ? Math.PI : -Math.PI);
+  for(let i=0;i<40;i++){
     const d = E - e*Math.sin(E) - M;
     E -= d / (1 - e*Math.cos(E));
     if(Math.abs(d)<1e-8)break;
@@ -1031,7 +1032,9 @@ COMETS.forEach(cd=>{
   const lbl=new CSS2DObject(document.createElement('div'));
   lbl.element.className='comet-label';lbl.element.textContent=cd.shortName;
   lbl.position.set(0,cd.radius*3,0);cometPivot.add(lbl);
-  cometObjects.push({data:cd,orbitGroup,cometPivot,nucleus,coma,dustTail,ionTail,a,b,c,angle:Math.random()*Math.PI*2});
+  // Perihel-Zeitpunkt (falls bekannt) → Position folgt der Simulationsuhr wie bei den Planeten
+  const tPeri=cd.perihelion?Date.parse(cd.perihelion+'T00:00:00Z'):J2000;
+  cometObjects.push({data:cd,orbitGroup,cometPivot,nucleus,coma,dustTail,ionTail,a,b,c,e:shp.e,tPeri,periodMs:cd.period*365.25*86400000});
   clickableObjects.push(nucleus);
 });
 
@@ -2452,11 +2455,11 @@ function animate(){
   issGroup.rotation.y+=0.08*dt*60*vis;issGroup.rotation.z=0.5;
   hubbleGroup.rotation.y-=0.06*dt*60*vis;hubbleGroup.rotation.z=-0.3;
   cometObjects.forEach(co=>{
-    const period=co.data.period;
-    const speed=0.6/Math.sqrt(Math.max(period,0.5));
-    if(vis)co.angle+=dt*vis*speed*0.5;
+    // Mittlere Anomalie aus Datum → exzentrische Anomalie (Kepler). Perihel liegt bei theta=0.
     const a=co.a,b=co.b,c=co.c;
-    const theta=co.angle;
+    let Mc=((simDate.getTime()-co.tPeri)/co.periodMs)%1; if(Mc<0)Mc+=1;
+    Mc=Mc*Math.PI*2; if(Mc>Math.PI)Mc-=Math.PI*2;
+    const theta=solveKepler(Mc,co.e);
     const x=a*Math.cos(theta)-c;
     const z=b*Math.sin(theta);
     co.cometPivot.position.set(x,0,z);
