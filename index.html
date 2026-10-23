@@ -70,6 +70,7 @@
 <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z" fill="currentColor"/></symbol>
 <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M3 17l5-5 4 4 3-3 6 6"/></symbol>
 <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
 <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></symbol>
 </svg>
 
@@ -90,7 +91,7 @@
 
     <!-- Gruppe 2: Darstellung & Steuerung -->
     <button class="sb-tab" data-panel="view" title="Anzeige"><svg class="ico"><use href="#i-eye"/></svg><span class="sb-tab-label">Ansicht</span></button>
-    <button class="sb-tab" data-panel="sim" title="Simulation"><svg class="ico"><use href="#i-orbit"/></svg><span class="sb-tab-label">Sim</span></button>
+    <button class="sb-tab" data-panel="sim" title="Simulation"><svg class="ico"><use href="#i-clock"/></svg><span class="sb-tab-label">Sim</span></button>
     <button class="sb-tab" data-panel="light" title="Beleuchtung"><svg class="ico"><use href="#i-light"/></svg><span class="sb-tab-label">Licht</span></button>
     <button class="sb-tab" data-panel="events" title="Ereignisse"><svg class="ico"><use href="#i-calendar"/></svg><span class="sb-tab-label">Events</span></button>
 
@@ -357,7 +358,8 @@
   <h2 id="info-name">Objekt</h2>
   <div class="info-subtitle" id="info-subtitle">Typ</div>
   <div class="info-desc" id="info-desc"></div>
-  <div class="info-hint">Doppeltipp für Fokus-Ansicht</div>
+  <button type="button" class="action-btn full info-focus-btn" id="btn-info-focus">Details &amp; Schule öffnen</button>
+  <div class="info-hint">Tipp: Doppeltipp auf ein Objekt öffnet die Details direkt</div>
 </div>
 
 <div id="note-modal" class="modal-overlay">

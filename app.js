@@ -386,9 +386,16 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
 const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.05, 8000);
 camera.position.set(0, 30, 55);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+// Qualitätsstufe: Handys/Tablets und schwache Geräte bekommen weniger Pixel und günstigere Effekte
+const IS_LOW_END = matchMedia('(pointer: coarse)').matches
+  || (navigator.hardwareConcurrency||8) <= 4
+  || Math.min(screen.width, screen.height) < 600;
+const MAX_PIXEL_RATIO = IS_LOW_END ? 1.5 : 2;
+let currentPixelRatio = Math.min(devicePixelRatio, MAX_PIXEL_RATIO);
+// antialias bringt mit EffectComposer nichts (gerendert wird in Render-Targets) und kostet nur Speicher
+const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
 renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setPixelRatio(currentPixelRatio);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.95;
 renderer.domElement.style.touchAction = 'none';
@@ -408,10 +415,20 @@ controls.minDistance = 0.05;
 controls.maxDistance = 1000;
 controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
 
-const composer = new EffectComposer(renderer);
+// Desktop: MSAA im Render-Target statt Canvas-Antialiasing
+const composerTarget = new THREE.WebGLRenderTarget(innerWidth, innerHeight, {
+  type: THREE.HalfFloatType, samples: IS_LOW_END ? 0 : 4
+});
+const composer = new EffectComposer(renderer, composerTarget);
 composer.addPass(new RenderPass(scene, camera));
 const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.22, 0.4, 0.92);
+if(IS_LOW_END){
+  // Bloom in halber Auflösung – optisch kaum Unterschied, spart viel GPU-Zeit
+  const origBloomSetSize = bloomPass.setSize.bind(bloomPass);
+  bloomPass.setSize = (w,h) => origBloomSetSize(Math.max(1,Math.round(w*0.5)), Math.max(1,Math.round(h*0.5)));
+}
 composer.addPass(bloomPass);
+composer.setSize(innerWidth, innerHeight); // Render-Targets auf CSS-Größe × Pixelratio bringen
 
 // ===== LIGHT =====
 const sunLight = new THREE.PointLight(0xfff0d0, 5.2, 0, 0);
@@ -424,13 +441,14 @@ hemiLight.position.set(0,50,0); scene.add(hemiLight);
 const milkyWayMat = new THREE.ShaderMaterial({
   side: THREE.BackSide, depthWrite: false, transparent: true,
   uniforms: { uBright: { value: 1.0 } },
+  defines: { OCT: IS_LOW_END ? 4 : 6 },
   vertexShader: `varying vec3 vDir; void main() { vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
   fragmentShader: `
     uniform float uBright;
     varying vec3 vDir;
     float hash(vec3 p){p=fract(p*vec3(443.897,441.423,437.195));p+=dot(p,p.yzx+19.19);return fract((p.x+p.y)*p.z);}
     float noise3(vec3 p){vec3 i=floor(p);vec3 f=fract(p);f=f*f*(3.0-2.0*f);float n000=hash(i);float n100=hash(i+vec3(1.,0.,0.));float n010=hash(i+vec3(0.,1.,0.));float n110=hash(i+vec3(1.,1.,0.));float n001=hash(i+vec3(0.,0.,1.));float n101=hash(i+vec3(1.,0.,1.));float n011=hash(i+vec3(0.,1.,1.));float n111=hash(i+vec3(1.,1.,1.));return mix(mix(mix(n000,n100,f.x),mix(n010,n110,f.x),f.y),mix(mix(n001,n101,f.x),mix(n011,n111,f.x),f.y),f.z);}
-    float fbm(vec3 p){float v=0.;float a=.5;for(int i=0;i<6;i++){v+=a*noise3(p);p*=2.;a*=.5;}return v;}
+    float fbm(vec3 p){float v=0.;float a=.5;for(int i=0;i<OCT;i++){v+=a*noise3(p);p*=2.;a*=.5;}return v;}
     void main(){
       vec3 dir=normalize(vDir);
       float cx=cos(.55),sx=sin(.55);float cy=cos(1.15),sy=sin(1.15);
@@ -1341,8 +1359,8 @@ document.querySelectorAll('.toggle-row').forEach(row=>{
       case'moons':allMoons.forEach(m=>m.visible=on);break;
       case'moonOrbits':moonOrbitsGroup.visible=on;break;
       case'satellites':satelliteMeshes.forEach(s=>s.visible=on);break;
-      case'asteroids':asteroidBelt.visible=on;break;
-      case'kuiper':kuiperBelt.visible=on;break;
+      case'asteroids':asteroidBelt.visible=on;beltsDirty=true;break;
+      case'kuiper':kuiperBelt.visible=on;beltsDirty=true;break;
       case'comets':cometsGroup.visible=on;break;
       case'milkyway':milkyWaySphere.visible=on;break;
     }
@@ -1952,7 +1970,7 @@ const PANEL_DEFS=[
   {id:'nav',title:'Navigation',icon:'#i-planet'},
   {id:'demo',title:'Demo-Tour',icon:'#i-play'},
   {id:'view',title:'Anzeige',icon:'#i-eye'},
-  {id:'sim',title:'Simulation',icon:'#i-orbit'},
+  {id:'sim',title:'Simulation',icon:'#i-clock'},
   {id:'light',title:'Licht-Studio',icon:'#i-light'},
   {id:'notes',title:'Notizen',icon:'#i-note'},
   {id:'events',title:'Ereignisse',icon:'#i-calendar'},
@@ -2358,7 +2376,7 @@ renderer.domElement.addEventListener('pointerup',e=>{
   lastClickedObject=obj;
   clearTimeout(clickTimeout);
   const delay=350;
-  clickTimeout=setTimeout(()=>{showInfoPreview(name);lastClickedObject=null;},delay);
+  clickTimeout=setTimeout(()=>{previewObject=obj;showInfoPreview(name);lastClickedObject=null;},delay);
 });
 function showInfoPreview(name){
   if(!name)return;
@@ -2370,9 +2388,29 @@ function showInfoPreview(name){
   document.getElementById('info-panel').classList.add('show');
 }
 document.getElementById('close-info').addEventListener('click',()=>document.getElementById('info-panel').classList.remove('show'));
+let previewObject=null;
+document.getElementById('btn-info-focus')?.addEventListener('click',()=>{
+  if(previewObject)enterFocusMode(previewObject);
+});
 
 // ANIMATION
 let frameCount=0,lastFpsTime=performance.now();
+let beltsDirty=true;
+const _dirAway=new THREE.Vector3();
+// Wenn es dauerhaft ruckelt: Auflösung schrittweise senken (bis 1.0)
+let lowFpsSeconds=0;
+function adaptQuality(fps){
+  if(document.hidden)return;
+  if(fps<28){lowFpsSeconds++;}else{lowFpsSeconds=0;}
+  if(lowFpsSeconds>=3 && currentPixelRatio>1){
+    currentPixelRatio=Math.max(1,+(currentPixelRatio-0.25).toFixed(2));
+    renderer.setPixelRatio(currentPixelRatio);
+    composer.setPixelRatio(currentPixelRatio);
+    onResize();
+    lowFpsSeconds=0;
+    addLog(`Auflösung reduziert auf ${currentPixelRatio}× (niedrige FPS)`,'warn');
+  }
+}
 const fpsEl=document.getElementById('fps-display');
 let simTime=0;
 const clock=new THREE.Clock();
@@ -2409,7 +2447,7 @@ function animate(){
     const r=Math.sqrt(x*x+z*z);
     const prox=Math.max(0.12,Math.min(1.0,5.5/Math.max(r,0.5)));
     const lenScale=0.55+1.3*prox;
-    const dirAway=new THREE.Vector3(x,0,z).normalize();
+    const dirAway=_dirAway.set(x,0,z).normalize();
     const dH=co.dustTail.userData.baseH*lenScale;
     const iH=co.ionTail.userData.baseH*lenScale*1.15;
     co.dustTail.scale.set(co.dustTail.userData.baseW*(0.8+0.4*prox), dH, 1);
@@ -2440,11 +2478,14 @@ function animate(){
     s.position.copy(u.wobbleAxis).multiplyScalar(wob * u.wobbleAmp * lightState.coronaSize);
   });
 
-  if(asteroidBelt.visible){
+  // Gürtel nur neu berechnen, wenn sich etwas bewegt (vorher 4000 Matrizen pro Frame, auch bei Pause)
+  const beltsMove = vis>0 || beltsDirty;
+  beltsDirty = false;
+  if(asteroidBelt.visible && beltsMove){
     for(let i=0;i<asteroidCount;i++){const a=asteroidData[i];a.angle+=a.rotSpeed*dt*vis;dummy.position.set(Math.cos(a.angle)*a.radius,a.yOffset,Math.sin(a.angle)*a.radius);dummy.rotation.set(a.angle*2,a.angle*3,a.angle);dummy.scale.setScalar(a.scale);dummy.updateMatrix();asteroidInstanced.setMatrixAt(i,dummy.matrix);}
     asteroidInstanced.instanceMatrix.needsUpdate=true;
   }
-  if(kuiperBelt.visible){
+  if(kuiperBelt.visible && beltsMove){
     for(let i=0;i<kuiperCount;i++){const k=kuiperData[i];k.angle+=k.rotSpeed*dt*vis;dummy.position.set(Math.cos(k.angle)*k.radius,k.yOffset,Math.sin(k.angle)*k.radius);dummy.rotation.set(k.angle*2,k.angle*2,0);dummy.scale.setScalar(k.scale);dummy.updateMatrix();kuiperInstanced.setMatrixAt(i,dummy.matrix);}
     kuiperInstanced.instanceMatrix.needsUpdate=true;
   }
@@ -2455,7 +2496,7 @@ function animate(){
   labelRenderer.render(scene,camera);
   frameCount++;
   const now=performance.now();
-  if(now-lastFpsTime>=1000){fpsEl.textContent='FPS: '+frameCount;frameCount=0;lastFpsTime=now;}
+  if(now-lastFpsTime>=1000){fpsEl.textContent='FPS: '+frameCount;adaptQuality(frameCount);frameCount=0;lastFpsTime=now;}
 }
 
 // ===== EREIGNISSE / ZEITSPRUNG =====
