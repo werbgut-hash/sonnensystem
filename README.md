@@ -4,7 +4,9 @@ Interaktives 3D-Sonnensystem (Three.js 0.160), optimiert für Handy und Desktop.
 
 ## Starten
 
-Die App nutzt ES-Module und muss deshalb über einen lokalen Webserver laufen. Ein Doppelklick auf `index.html` reicht nicht.
+**Einfach:** Doppelklick auf `start.bat`. Das startet einen lokalen Webserver und öffnet den Browser. Das Fenster offen lassen, solange die App läuft.
+
+Die App nutzt ES-Module und muss deshalb über einen lokalen Webserver laufen. Ein Doppelklick auf `index.html` reicht nicht. Manuell geht es so:
 
 ```
 cd C:\claude-stuff\sonnensystem
