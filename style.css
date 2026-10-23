@@ -729,6 +729,12 @@ html,body{height:100%;height:100dvh;overflow:hidden;}
   #focus-left.minimized ~ #focus-right,
   #focus-panel:has(#focus-right.minimized) #focus-left{max-height:52vh;}
   .focus-body{padding:12px;}
+  /* Wisch-Panel: Griff oben, groß-Modus */
+  .focus-header,.poi-header{touch-action:none;position:sticky;padding-top:18px;}
+  .focus-header::before,.poi-header::before{content:'';position:absolute;top:6px;left:50%;transform:translateX(-50%);width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,0.28);}
+  #focus-left.expanded,#focus-right.expanded{max-height:78vh!important;}
+  #focus-panel:has(.expanded){max-height:84vh;}
+  #focus-left,#focus-right{transition:transform 0.18s ease-out,max-height 0.22s ease;}
 
   /* Info-Panel: top resetten */
   #info-panel{

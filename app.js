@@ -1245,6 +1245,8 @@ function exitFocusMode(){
   closeLightbox();
   focusMode=null;
   document.getElementById('focus-panel').classList.remove('show');
+  document.getElementById('focus-left').classList.remove('expanded');
+  document.getElementById('focus-right').classList.remove('expanded');
   document.getElementById('focus-left').classList.remove('minimized');
   document.getElementById('focus-right').classList.remove('minimized');
   document.getElementById('focus-restore-left').style.display='none';
@@ -1364,6 +1366,35 @@ document.getElementById('focus-restore-right').addEventListener('click',()=>{
   document.getElementById('focus-right').classList.remove('minimized');
   document.getElementById('focus-restore-right').style.display='none';
 });
+// Mobil: Fokus-Fenster als Wisch-Panel. Kopfzeile nach oben ziehen = groß, nach unten = einklappen
+function initFocusSwipe(boxId, side){
+  const box=document.getElementById(boxId);
+  const handle=box&&box.querySelector('.focus-header, .poi-header');
+  if(!handle)return;
+  let start=null;
+  handle.addEventListener('pointerdown',e=>{
+    if(!isMobileLayout()||e.target.closest('button,input'))return;
+    start={y:e.clientY,id:e.pointerId};
+    try{handle.setPointerCapture(e.pointerId);}catch(_){}
+  });
+  handle.addEventListener('pointermove',e=>{
+    if(!start||e.pointerId!==start.id)return;
+    const dy=e.clientY-start.y;
+    box.style.transform=dy>0?`translateY(${Math.min(dy,200)}px)`:'';
+  });
+  const end=e=>{
+    if(!start||e.pointerId!==start.id)return;
+    const dy=e.clientY-start.y; start=null;
+    box.style.transform='';
+    if(dy>60){box.classList.remove('expanded');minimizeFocusBox(side);}
+    else if(dy<-40){box.classList.add('expanded');}
+    else if(Math.abs(dy)<6){box.classList.toggle('expanded');}
+  };
+  handle.addEventListener('pointerup',end);
+  handle.addEventListener('pointercancel',end);
+}
+initFocusSwipe('focus-left','left');
+initFocusSwipe('focus-right','right');
 document.getElementById('btn-focus-exit')?.addEventListener('click',()=>{
   if(focusMode) exitFocusMode();
 });
@@ -2910,3 +2941,7 @@ document.getElementById('dl-all').addEventListener('click',async()=>{await downl
 document.getElementById('dl-earth').addEventListener('click',()=>downloadGroup(TEXTURES.earth));
 document.getElementById('dl-planets').addEventListener('click',()=>downloadGroup(TEXTURES.planets));
 document.getElementById('dl-moons').addEventListener('click',()=>downloadGroup(TEXTURES.moons));
+// PWA: Service Worker registrieren (nur über http/https, nicht bei file://)
+if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
+  addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(err=>console.warn('Service Worker:',err));});
+}
