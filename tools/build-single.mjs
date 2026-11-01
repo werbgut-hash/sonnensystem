@@ -2,7 +2,7 @@
 // Alles steckt in der Datei: Code, Three.js, CSS und die lokalen Texturen.
 // Sie läuft ohne Webserver, z. B. direkt vom Handy-Speicher geöffnet.
 //
-// Aufruf im Projektordner:  npx --yes esbuild@0.24.0 --version  (einmalig)
+// Aufruf im Projektordner:  npm i esbuild   (einmalig)
 //                           node tools/build-single.mjs
 import { readFileSync, writeFileSync, mkdtempSync, cpSync } from 'node:fs';
 import { join, dirname } from 'node:path';
