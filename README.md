@@ -15,6 +15,8 @@ python -m http.server 8080
 
 Dann im Browser `http://localhost:8080` öffnen. Vom Handy im selben WLAN: `http://<PC-IP>:8080`.
 
+**Einzelne HTML-Datei (ohne Server, z. B. fürs Handy):** `node tools/build-single.mjs` erzeugt `sonnensystem-mobil.html` (rund 8 MB). Darin stecken Code, Three.js, CSS und Texturen. Die Datei lässt sich direkt öffnen, ohne Webserver. Nur Pluto, Ceres und die Monde brauchen Internet. Zum Bauen wird esbuild benötigt (`npm i esbuild`).
+
 **Als App installieren:** Sobald die Seite über https läuft (z. B. GitHub Pages) oder über `localhost`, kann man sie im Browser-Menü mit „Zum Startbildschirm hinzufügen“ bzw. „App installieren“ installieren. Danach funktioniert sie auch offline. Nach Änderungen in `sw.js` die `CACHE`-Version erhöhen.
 
 Three.js und die Haupttexturen liegen im Ordner (`vendor/`, `*.jpg`). Die App läuft also auch offline. Nur Pluto, Ceres und einige Monde laden ihre Texturen von Wikimedia, sonst gibt es eine Ersatztextur.
